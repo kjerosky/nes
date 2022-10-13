@@ -51,6 +51,48 @@ int Cpu::executeOneInstruction() {
 
     byte currentInstruction = ram[pc++];
     switch (currentInstruction) {
+        // CLC
+        case 0x18:
+            cFlag = 0;
+            cycleCount = 2;
+            break;
+
+        // SEC
+        case 0x38:
+            cFlag = 1;
+            cycleCount = 2;
+            break;
+
+        // CLI
+        case 0x58:
+            iFlag = 0;
+            cycleCount = 2;
+            break;
+
+        // SEI
+        case 0x78:
+            iFlag = 1;
+            cycleCount = 2;
+            break;
+
+        // CLV
+        case 0xB8:
+            vFlag = 0;
+            cycleCount = 2;
+            break;
+
+        // CLD
+        case 0xD8:
+            dFlag = 0;
+            cycleCount = 2;
+            break;
+
+        // SED
+        case 0xF8:
+            dFlag = 1;
+            cycleCount = 2;
+            break;
+
         // LDA
         case 0xA9:
         case 0xA5:
