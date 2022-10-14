@@ -1,159 +1,72 @@
-#include <iostream>
-#include <iomanip>
-#include <algorithm>
 #include "Cpu.h"
 
-using namespace std;
+Cpu::Cpu(Bus* bus) {
+    this->bus = bus;
 
-Cpu::Cpu() {
     initialize();
 }
 
 Cpu::~Cpu() {
-    //TODO
+    // do nothing
 }
 
-void Cpu::debugRegisters() {
-    byte flags = getFlagsAsByte();
-    bitset<8> flagsBits(flags);
+CpuDebugInfo Cpu::getDebugInfo() {
+    CpuDebugInfo debugInfo;
+    debugInfo.a = a;
+    debugInfo.x = x;
+    debugInfo.y = y;
+    debugInfo.sp = sp;
+    debugInfo.status = status;
+    debugInfo.pc = pc;
+    debugInfo.nFlag = status & N_FLAG;
+    debugInfo.vFlag = status & V_FLAG;
+    debugInfo.dFlag = status & D_FLAG;
+    debugInfo.iFlag = status & I_FLAG;
+    debugInfo.zFlag = status & Z_FLAG;
+    debugInfo.cFlag = status & C_FLAG;
 
-    cout << uppercase << setfill('0')
-        << "PC=$" << setw(4) << right << hex << (int)pc
-        << " SP=$" << setw(2) << right << hex << (int)sp
-        << " A=$" << setw(2) << right << hex << (int)a
-        << " X=$" << setw(2) << right << hex << (int)x
-        << " Y=$" << setw(2) << right << hex << (int)y
-        << " FLAGS=$" << setw(2) << right << hex << (int)flags << "=" << flagsBits << "="
-        << "N" << (int)nFlag << "/V" << (int)vFlag << "/D" << (int)dFlag
-        << "/I" << (int)iFlag << "/Z" << (int)zFlag << "/C" << (int)cFlag
-    << endl;
+    return debugInfo;
 }
 
 void Cpu::initialize() {
-    fill(ram, ram + RAM_SIZE, 0);
-
     a = 0;
     x = 0;
     y = 0;
     sp = 0xFF;
+    status = 0;
     pc = 0;
 
-    nFlag = 0;
-    vFlag = 0;
-    dFlag = 0;
-    iFlag = 0;
-    zFlag = 0;
-    cFlag = 0;
+    cyclesRemaining = 0;
 }
 
-int Cpu::executeOneInstruction() {
-    int cycleCount = 0;
+void Cpu::clockTick() {
+    if (cyclesRemaining == 0) {
+        opcode = bus->read(pc++);
 
-    byte currentInstruction = ram[pc++];
-    switch (currentInstruction) {
-        // CLC
-        case 0x18:
-            cFlag = 0;
-            cycleCount = 2;
-            break;
+        //TODO LOOKUP OPCODE
 
-        // SEC
-        case 0x38:
-            cFlag = 1;
-            cycleCount = 2;
-            break;
-
-        // CLI
-        case 0x58:
-            iFlag = 0;
-            cycleCount = 2;
-            break;
-
-        // SEI
-        case 0x78:
-            iFlag = 1;
-            cycleCount = 2;
-            break;
-
-        // CLV
-        case 0xB8:
-            vFlag = 0;
-            cycleCount = 2;
-            break;
-
-        // CLD
-        case 0xD8:
-            dFlag = 0;
-            cycleCount = 2;
-            break;
-
-        // SED
-        case 0xF8:
-            dFlag = 1;
-            cycleCount = 2;
-            break;
-
-        // LDA
-        case 0xA9:
-        case 0xA5:
-        case 0xB5:
-        case 0xAD:
-        case 0xBD:
-        case 0xB9:
-        case 0xA1:
-        case 0xB1: {
-            byte valueToLoad = 0;
-            switch (currentInstruction) {
-                case 0xA9: // immediate
-                    //TODO
-                    break;
-                case 0xA5: // zero page
-                    //TODO
-                    break;
-                case 0xB5: // zero page, X
-                    //TODO
-                    break;
-                case 0xAD: // absolute
-                    //TODO
-                    break;
-                case 0xBD: // absolute, X
-                    //TODO
-                    break;
-                case 0xB9: // absolute, Y
-                    //TODO
-                    break;
-                case 0xA1: // indirect, X
-                    //TODO
-                    break;
-                case 0xB1: // indirect, Y
-                    //TODO
-                    break;
-            }
-
-            a = valueToLoad;
-        } break;
-
-        default:
-            cerr << "[ERROR] cpu attempted to execute an unknown opcode: $"
-                << uppercase << setfill('0') << setw(2) << right << hex << (int)currentInstruction << endl;
+        //TODO GET ADDITIONAL CYCLES FROM ADDRESS MODE
+        //TODO GET ADDITIONAL CYCLES FROM OPERATION
+        //TODO ADD ADDITIONAL CYCLES TO REMAINING CYCLES
     }
 
-    if (cycleCount == 0) {
-        cerr << "[ERROR] instruction $"
-            << uppercase << setfill('0') << setw(2) << right << hex << (int)currentInstruction
-            << " has an unset cycle count!" << endl;
-    }
-
-    return cycleCount;
+    cyclesRemaining--;
 }
 
-byte Cpu::getFlagsAsByte() {
-    return
-        (nFlag << N_BIT_POSITION) |
-        (vFlag << V_BIT_POSITION) |
-        (dFlag << D_BIT_POSITION) |
-        (iFlag << I_BIT_POSITION) |
-        (zFlag << Z_BIT_POSITION) |
-        (cFlag << C_BIT_POSITION)
-    ;
+bool Cpu::isCurrentInstructionComplete() {
+    //TODO USE THIS RETURN STATEMENT WHEN READY
+    //return cyclesRemaining == 0;
+    return true;
+}
+
+byte Cpu::getStatusFlag(byte flag) {
+    return status & flag ? 1 : 0;
+}
+
+void Cpu::setStatusFlag(byte flag) {
+    status |= flag;
+}
+
+void Cpu::clearStatusFlag(byte flag) {
+    status &= ~flag;
 }
