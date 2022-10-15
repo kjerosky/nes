@@ -27,6 +27,7 @@ public:
     Cpu(Bus* bus);
     ~Cpu();
 
+    void reset();
     void clockTick();
     bool isCurrentInstructionComplete();
     CpuDebugInfo getDebugInfo();
@@ -51,8 +52,6 @@ private:
 
     nesByte opcode;
     int cyclesRemaining;
-
-    void initialize();
 
     nesByte getStatusFlag(nesByte flag);
     void setStatusFlag(nesByte flag, bool value);

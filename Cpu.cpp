@@ -3,7 +3,7 @@
 Cpu::Cpu(Bus* bus) {
     this->bus = bus;
 
-    initialize();
+    reset();
 }
 
 Cpu::~Cpu() {
@@ -28,13 +28,16 @@ CpuDebugInfo Cpu::getDebugInfo() {
     return debugInfo;
 }
 
-void Cpu::initialize() {
+void Cpu::reset() {
+    nesWord newPcLo = bus->read(0xFFFC);
+    nesWord newPcHi = bus->read(0xFFFD);
+    pc = (newPcHi << 8) | newPcLo;
+
     a = 0;
     x = 0;
     y = 0;
     sp = 0xFF;
     status = 0;
-    pc = 0;
 
     cyclesRemaining = 0;
 }
@@ -54,9 +57,7 @@ void Cpu::clockTick() {
 }
 
 bool Cpu::isCurrentInstructionComplete() {
-    //TODO USE THIS RETURN STATEMENT WHEN READY
-    //return cyclesRemaining == 0;
-    return true;
+    return cyclesRemaining <= 0;
 }
 
 nesByte Cpu::getStatusFlag(nesByte flag) {
