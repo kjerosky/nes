@@ -21,6 +21,8 @@ private:
     };
     DisplayRenderMode displayRenderMode;
 
+    olc::Sprite tempDisplay;
+
 public:
 
     bool OnUserCreate() override {
@@ -31,6 +33,8 @@ public:
         bus->ram[0xFFFD] = 0x80;
 
         cpu = new Cpu(bus);
+
+        tempDisplay = olc::Sprite(256, 240);
 
         displayRenderMode = SHOW_MEMORY_RENDER_MODE;
 
@@ -72,7 +76,13 @@ public:
             drawPageData(8, 8, 0x0000);
             drawPageData(8, 152, 0x8000);
         } else if (displayRenderMode == SHOW_SCREEN_RENDER_MODE) {
-            //TODO
+            //TODO fake some noise for now...need to get this from the ppu in the future
+            for (int y = 0; y < 240; y++) {
+                for (int x = 0; x < 256; x++) {
+                    tempDisplay.SetPixel(x, y, rand() % 2 ? olc::BLACK : olc::Pixel(230, 230, 230));
+                }
+            }
+            DrawSprite(0, 0, &tempDisplay, 2);
         }
     }
 
