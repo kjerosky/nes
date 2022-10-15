@@ -1,7 +1,9 @@
-TARGET_EXECUTABLE=nes
+EXECUTABLE = nes
+LIBRARIES = -framework OpenGL -framework GLUT -framework Carbon -lpng
+SOURCES = Nes.cpp Cpu.cpp Bus.cpp TextUtils.cpp
 
 all:
-	g++ -Wall Nes.cpp Cpu.cpp Bus.cpp -o $(TARGET_EXECUTABLE) -I/Library/Frameworks/SDL2.framework/Headers -F/Library/Frameworks -framework SDL2 -lncurses
+	g++ $(SOURCES) -o $(EXECUTABLE) -arch arm64 -std=c++17 -mmacosx-version-min=10.15 -Wall -L/opt/homebrew/Cellar/libpng/1.6.38/lib $(LIBRARIES) -I/opt/homebrew/Cellar/libpng/1.6.38/include
 
 clean:
-	rm -rf $(TARGET_EXECUTABLE)
+	rm -rf $(EXECUTABLE)

@@ -1,5 +1,3 @@
-#include <iostream>
-#include <iomanip>
 #include <algorithm>
 #include "Bus.h"
 
@@ -13,17 +11,15 @@ Bus::~Bus() {
     // do nothing
 }
 
-byte Bus::read(word address) {
+nesByte Bus::read(nesWord address) {
     if (address >= 0x0000 && address <= 0xFFFF) {
         return ram[address];
     }
 
-    cerr << "[ERROR] Address $" << uppercase << setfill('0') << setw(2) << right << hex << (int)address
-        << " is not setup to be handled in the bus!" << endl;
     return 0;
 }
 
-void Bus::write(word address, byte value) {
+void Bus::write(nesWord address, nesByte value) {
     if (address >= 0x0000 && address <= 0xFFFF) {
         ram[address] = value;
     }

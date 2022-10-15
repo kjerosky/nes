@@ -40,7 +40,7 @@ void Cpu::initialize() {
 }
 
 void Cpu::clockTick() {
-    if (cyclesRemaining == 0) {
+    if (cyclesRemaining <= 0) {
         opcode = bus->read(pc++);
 
         //TODO LOOKUP OPCODE
@@ -59,14 +59,14 @@ bool Cpu::isCurrentInstructionComplete() {
     return true;
 }
 
-byte Cpu::getStatusFlag(byte flag) {
+nesByte Cpu::getStatusFlag(nesByte flag) {
     return status & flag ? 1 : 0;
 }
 
-void Cpu::setStatusFlag(byte flag) {
-    status |= flag;
-}
-
-void Cpu::clearStatusFlag(byte flag) {
-    status &= ~flag;
+void Cpu::setStatusFlag(nesByte flag, bool value) {
+    if (value) {
+        status |= flag;
+    } else {
+        status &= ~flag;
+    }
 }

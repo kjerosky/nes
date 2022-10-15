@@ -5,12 +5,12 @@
 #include "Bus.h"
 
 typedef struct {
-    byte a;
-    byte x;
-    byte y;
-    byte sp;
-    byte status;
-    word pc;
+    nesByte a;
+    nesByte x;
+    nesByte y;
+    nesByte sp;
+    nesByte status;
+    nesWord pc;
 
     bool nFlag;
     bool vFlag;
@@ -33,30 +33,29 @@ public:
 
 private:
 
-    static const byte N_FLAG = 1 << 7;
-    static const byte V_FLAG = 1 << 6;
-    static const byte D_FLAG = 1 << 3;
-    static const byte I_FLAG = 1 << 2;
-    static const byte Z_FLAG = 1 << 1;
-    static const byte C_FLAG = 1 << 0;
+    static const nesByte N_FLAG = 1 << 7;
+    static const nesByte V_FLAG = 1 << 6;
+    static const nesByte D_FLAG = 1 << 3;
+    static const nesByte I_FLAG = 1 << 2;
+    static const nesByte Z_FLAG = 1 << 1;
+    static const nesByte C_FLAG = 1 << 0;
 
     Bus* bus;
 
-    byte a;
-    byte x;
-    byte y;
-    byte sp;
-    byte status;
-    word pc;
+    nesByte a;
+    nesByte x;
+    nesByte y;
+    nesByte sp;
+    nesByte status;
+    nesWord pc;
 
-    byte opcode;
+    nesByte opcode;
     int cyclesRemaining;
 
     void initialize();
 
-    byte getStatusFlag(byte flag);
-    void setStatusFlag(byte flag);
-    void clearStatusFlag(byte flag);
+    nesByte getStatusFlag(nesByte flag);
+    void setStatusFlag(nesByte flag, bool value);
 };
 
 #endif

@@ -1,80 +1,86 @@
-#include <iostream>
-#include <curses.h>
-#include <SDL.h>
+#define OLC_PGE_APPLICATION
+#include "olcPixelGameEngine.h"
+
+#include "TextUtils.h"
 #include "Cpu.h"
+#include "Bus.h"
 
-using namespace std;
+// 16:9 aspect ratio with 2x nes resolution height
+const int WINDOW_WIDTH = 853;
+const int WINDOW_HEIGHT = 480;
 
-void printCpuDebugInfo(Cpu* cpu) {
-    CpuDebugInfo cpuDebugInfo = cpu->getDebugInfo();
+class Display : public olc::PixelGameEngine {
 
-    bitset<8> statusBits(cpuDebugInfo.status);
+private:
 
-    printw("PC=$%04X SP=$%02X A=$%02X X=$%02X Y=$%02X FLAGS=$%02X=%s/N=%d/V=%d/D=%d/I=%d/Z=%d/C=%d\n",
-        (int)cpuDebugInfo.pc,
-        (int)cpuDebugInfo.sp,
-        (int)cpuDebugInfo.a,
-        (int)cpuDebugInfo.x,
-        (int)cpuDebugInfo.y,
-        (int)cpuDebugInfo.status,
-        statusBits.to_string().c_str(),
-        (int)cpuDebugInfo.nFlag,
-        (int)cpuDebugInfo.vFlag,
-        (int)cpuDebugInfo.dFlag,
-        (int)cpuDebugInfo.iFlag,
-        (int)cpuDebugInfo.zFlag,
-        (int)cpuDebugInfo.cFlag
-    );
-}
+    const int CPU_DATA_RIGHT_SCREEN_EDGE_DISTANCE = 144;
+    const int CPU_DATA_TOP_SCREEN_EDGE_DISTANCE = 8;
 
-int main(int argc, char* argv[]) {
-    initscr();
-    SDL_Init(SDL_INIT_VIDEO);
+    Bus* bus;
+    Cpu* cpu;
 
-    Bus bus;
-    Cpu cpu(&bus);
+public:
 
-    bool isRunning = true;
-    bool shouldUpdateDisplay = true;
-    while (isRunning) {
-        SDL_Event event;
-        while (SDL_PollEvent(&event)) {
-            switch (event.type) {
-                case SDL_QUIT:
-                    isRunning = false;
-                    break;
+    bool OnUserCreate() override {
+        sAppName = "NES Emulator";
 
-                case SDL_KEYDOWN:
-                    switch (event.key.keysym.sym) {
-                        case SDLK_ESCAPE:
-                            isRunning = false;
-                            break;
+        bus = new Bus();
+        cpu = new Cpu(bus);
 
-                        case SDLK_SPACE:
-                            do {
-                                cpu.clockTick();
-                            } while (!cpu.isCurrentInstructionComplete());
-
-                            shouldUpdateDisplay = true;
-                            break;
-                    }
-                    break;
-            }
-        }
-
-        if (shouldUpdateDisplay) {
-            clear();
-            move(1, 2);
-            printCpuDebugInfo(&cpu);
-            refresh();
-
-            shouldUpdateDisplay = false;
-        }
+        return true;
     }
 
-    endwin();
-    SDL_Quit();
+    bool OnUserUpdate(float fElapsedTime) override {
+        if (GetKey(olc::Key::ESCAPE).bPressed) {
+            return false;
+        } else if (GetKey(olc::Key::SPACE).bPressed) {
+            executeNextInstructions();
+        }
 
-    cout << "Completed successfully!" << endl;
+        Clear(olc::DARK_BLUE);
+
+        drawCpuData(ScreenWidth() - CPU_DATA_RIGHT_SCREEN_EDGE_DISTANCE, CPU_DATA_TOP_SCREEN_EDGE_DISTANCE);
+
+        return true;
+    }
+
+    bool OnUserDestroy() override {
+        delete bus;
+        delete cpu;
+
+        return true;
+    }
+
+    void executeNextInstructions() {
+        do {
+            cpu->clockTick();
+        } while (!cpu->isCurrentInstructionComplete());
+    }
+
+    void drawCpuData(int x, int y) {
+        CpuDebugInfo cpuDebugInfo = cpu->getDebugInfo();
+
+        DrawString(x, y, "N", cpuDebugInfo.nFlag ? olc::YELLOW : olc::DARK_GREY);
+        DrawString(x + 16, y, "V", cpuDebugInfo.vFlag ? olc::YELLOW : olc::DARK_GREY);
+        DrawString(x + 32, y, "D", cpuDebugInfo.dFlag ? olc::YELLOW : olc::DARK_GREY);
+        DrawString(x + 48, y, "I", cpuDebugInfo.iFlag ? olc::YELLOW : olc::DARK_GREY);
+        DrawString(x + 64, y, "Z", cpuDebugInfo.zFlag ? olc::YELLOW : olc::DARK_GREY);
+        DrawString(x + 80, y, "C", cpuDebugInfo.cFlag ? olc::YELLOW : olc::DARK_GREY);
+
+        DrawString(x, y + 10, "PC=$" + hex(cpuDebugInfo.pc, 4));
+        DrawString(x, y + 20, "SP=$" + hex(cpuDebugInfo.sp, 2));
+        DrawString(x, y + 30, " A=$" + hex(cpuDebugInfo.a, 2) + " ("
+            + std::to_string(cpuDebugInfo.a) + "/" + std::to_string((char)cpuDebugInfo.a) + ")");
+        DrawString(x, y + 40, " X=$" + hex(cpuDebugInfo.x, 2) + " (" + std::to_string(cpuDebugInfo.x) + ")");
+        DrawString(x, y + 50, " Y=$" + hex(cpuDebugInfo.y, 2) + " (" + std::to_string(cpuDebugInfo.y) + ")");
+    }
+};
+
+int main(int argc, char* argv[]) {
+    Display display;
+    if (display.Construct(WINDOW_WIDTH, WINDOW_HEIGHT, 1, 1, true)) {
+        display.Start();
+    }
+
     return 0;
 }

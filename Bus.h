@@ -10,14 +10,14 @@ public:
     Bus();
     ~Bus();
 
-    byte read(word address);
-    void write(word address, byte value);
+    nesByte read(nesWord address);
+    void write(nesWord address, nesByte value);
 
 private:
 
     static const int RAM_SIZE = 65536;
 
-    byte ram[RAM_SIZE];
+    nesByte ram[RAM_SIZE];
 };
 
 #endif
