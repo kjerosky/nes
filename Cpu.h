@@ -1,8 +1,12 @@
 #ifndef CPU_H
 #define CPU_H
 
+#include <string>
+#include <vector>
 #include "Types.h"
 #include "Bus.h"
+
+class Cpu;
 
 typedef struct {
     nesByte a;
@@ -19,6 +23,13 @@ typedef struct {
     bool zFlag;
     bool cFlag;
 } CpuDebugInfo;
+
+typedef struct {
+    std::string name;
+    int cycles;
+    int (Cpu::*addressMode)();
+    int (Cpu::*execute)();
+} Instruction;
 
 class Cpu {
 
@@ -55,6 +66,13 @@ private:
 
     nesByte getStatusFlag(nesByte flag);
     void setStatusFlag(nesByte flag, bool value);
+
+    std::vector<Instruction> opcodeTable;
+    void initializeOpcodeTable();
+
+    int implied();
+
+    int invalid();
 };
 
 #endif

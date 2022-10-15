@@ -3,11 +3,20 @@
 Cpu::Cpu(Bus* bus) {
     this->bus = bus;
 
+    initializeOpcodeTable();
+
     reset();
 }
 
 Cpu::~Cpu() {
     // do nothing
+}
+
+void Cpu::initializeOpcodeTable() {
+    Instruction invalidInstruction = {"???", 2, &Cpu::implied, &Cpu::invalid};
+    opcodeTable = std::vector<Instruction>(256, invalidInstruction);
+
+    //TODO OVERRIDE VALID OPCODES HERE
 }
 
 CpuDebugInfo Cpu::getDebugInfo() {
@@ -70,4 +79,12 @@ void Cpu::setStatusFlag(nesByte flag, bool value) {
     } else {
         status &= ~flag;
     }
+}
+
+int Cpu::implied() {
+    return 0;
+}
+
+int Cpu::invalid() {
+    return 0;
 }
