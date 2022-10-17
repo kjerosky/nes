@@ -47,6 +47,8 @@ private:
 
     static const nesByte N_FLAG = 1 << 7;
     static const nesByte V_FLAG = 1 << 6;
+    static const nesByte U_FLAG = 1 << 5;
+    static const nesByte B_FLAG = 1 << 4;
     static const nesByte D_FLAG = 1 << 3;
     static const nesByte I_FLAG = 1 << 2;
     static const nesByte Z_FLAG = 1 << 1;

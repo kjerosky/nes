@@ -337,7 +337,8 @@ bool Cpu::RTS() {
 }
 
 bool Cpu::PHP() {
-    //TODO
+    bus->write(0x0100 + sp, status | U_FLAG | B_FLAG);
+    sp--;
     return false;
 }
 
@@ -347,7 +348,8 @@ bool Cpu::CLC() {
 }
 
 bool Cpu::PLP() {
-    //TODO
+    sp++;
+    status = bus->read(0x0100 + sp) & (~U_FLAG) & (~B_FLAG);
     return false;
 }
 
@@ -357,7 +359,8 @@ bool Cpu::SEC() {
 }
 
 bool Cpu::PHA() {
-    //TODO
+    bus->write(0x0100 + sp, a);
+    sp--;
     return false;
 }
 
@@ -367,7 +370,10 @@ bool Cpu::CLI() {
 }
 
 bool Cpu::PLA() {
-    //TODO
+    sp++;
+    a = bus->read(0x0100 + sp);
+    setStatusFlag(N_FLAG, a & 0x80);
+    setStatusFlag(Z_FLAG, a == 0x00);
     return false;
 }
 
@@ -377,17 +383,23 @@ bool Cpu::SEI() {
 }
 
 bool Cpu::DEY() {
-    //TODO
+    y--;
+    setStatusFlag(N_FLAG, y & 0x80);
+    setStatusFlag(Z_FLAG, y == 0x00);
     return false;
 }
 
 bool Cpu::TYA() {
-    //TODO
+    a = y;
+    setStatusFlag(N_FLAG, a & 0x80);
+    setStatusFlag(Z_FLAG, a == 0x00);
     return false;
 }
 
 bool Cpu::TAY() {
-    //TODO
+    y = a;
+    setStatusFlag(N_FLAG, y & 0x80);
+    setStatusFlag(Z_FLAG, y == 0x00);
     return false;
 }
 
@@ -397,7 +409,9 @@ bool Cpu::CLV() {
 }
 
 bool Cpu::INY() {
-    //TODO
+    y++;
+    setStatusFlag(N_FLAG, y & 0x80);
+    setStatusFlag(Z_FLAG, y == 0x00);
     return false;
 }
 
@@ -407,7 +421,9 @@ bool Cpu::CLD() {
 }
 
 bool Cpu::INX() {
-    //TODO
+    x++;
+    setStatusFlag(N_FLAG, x & 0x80);
+    setStatusFlag(Z_FLAG, x == 0x00);
     return false;
 }
 
