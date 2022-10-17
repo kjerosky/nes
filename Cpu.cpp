@@ -214,8 +214,7 @@ void Cpu::reset() {
 
 void Cpu::clockTick() {
     if (cyclesRemaining <= 0) {
-        nesByte opcodeByte = bus->read(pc);
-        pc++;
+        nesByte opcodeByte = bus->read(pc++);
 
         opcode = opcodeTable[opcodeByte];
         cyclesRemaining = opcode.cycles;
@@ -255,7 +254,9 @@ bool Cpu::implied() {
 }
 
 bool Cpu::absolute() {
-    //TODO
+    nesWord loAddressByte = bus->read(pc++);
+    nesWord hiAddressByte = bus->read(pc++);
+    fetchedByte = bus->read((hiAddressByte << 8) | loAddressByte);
     return false;
 }
 
@@ -272,8 +273,7 @@ bool Cpu::absoluteYIndexed() {
 }
 
 bool Cpu::immediate() {
-    fetchedByte = bus->read(pc);
-    pc++;
+    fetchedByte = bus->read(pc++);
     return false;
 }
 
@@ -299,12 +299,14 @@ bool Cpu::relative() {
 }
 
 bool Cpu::zeropage() {
-    //TODO
+    absoluteAddress = bus->read(pc++);
+    fetchedByte = bus->read(absoluteAddress);
     return false;
 }
 
 bool Cpu::zeropageXIndexed() {
-    //TODO
+    absoluteAddress = bus->read(pc++) + x;
+    fetchedByte = bus->read(absoluteAddress & 0xFF);
     return false;
 }
 
