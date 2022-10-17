@@ -251,65 +251,65 @@ void Cpu::setStatusFlag(nesByte flag, bool value) {
 
 bool Cpu::implied() {
     fetchedByte = a;
-    return 0;
+    return false;
 }
 
 bool Cpu::absolute() {
     //TODO
-    return 0;
+    return false;
 }
 
 bool Cpu::absoluteXIndexed() {
     //TODO
     //NOTE: CAN HAVE ADDITIONAL CYCLES!
-    return 0;
+    return false;
 }
 
 bool Cpu::absoluteYIndexed() {
     //TODO
     //NOTE: CAN HAVE ADDITIONAL CYCLES!
-    return 0;
+    return false;
 }
 
 bool Cpu::immediate() {
     //TODO
-    return 0;
+    return false;
 }
 
 bool Cpu::indirect() {
     //TODO
-    return 0;
+    return false;
 }
 
 bool Cpu::indexedIndirect() {
     //TODO
-    return 0;
+    return false;
 }
 
 bool Cpu::indirectIndexed() {
     //TODO
     //NOTE: CAN HAVE ADDITIONAL CYCLES!
-    return 0;
+    return false;
 }
 
 bool Cpu::relative() {
     //TODO
-    return 0;
+    return false;
 }
 
 bool Cpu::zeropage() {
     //TODO
-    return 0;
+    return false;
 }
 
 bool Cpu::zeropageXIndexed() {
     //TODO
-    return 0;
+    return false;
 }
 
 bool Cpu::zeropageYIndexed() {
     //TODO
-    return 0;
+    return false;
 }
 
 
@@ -318,295 +318,303 @@ bool Cpu::zeropageYIndexed() {
 
 bool Cpu::invalid() {
     // do nothing for invalid operations
-    return 0;
+    return false;
 }
 
 bool Cpu::BRK() {
     //TODO
-    return 0;
+    return false;
 }
 
 bool Cpu::RTI() {
     //TODO
-    return 0;
+    return false;
 }
 
 bool Cpu::RTS() {
     //TODO
-    return 0;
+    return false;
 }
 
 bool Cpu::PHP() {
     //TODO
-    return 0;
+    return false;
 }
 
 bool Cpu::CLC() {
     setStatusFlag(C_FLAG, 0);
-    return 0;
+    return false;
 }
 
 bool Cpu::PLP() {
     //TODO
-    return 0;
+    return false;
 }
 
 bool Cpu::SEC() {
     setStatusFlag(C_FLAG, 1);
-    return 0;
+    return false;
 }
 
 bool Cpu::PHA() {
     //TODO
-    return 0;
+    return false;
 }
 
 bool Cpu::CLI() {
     setStatusFlag(I_FLAG, 0);
-    return 0;
+    return false;
 }
 
 bool Cpu::PLA() {
     //TODO
-    return 0;
+    return false;
 }
 
 bool Cpu::SEI() {
     setStatusFlag(I_FLAG, 1);
-    return 0;
+    return false;
 }
 
 bool Cpu::DEY() {
     //TODO
-    return 0;
+    return false;
 }
 
 bool Cpu::TYA() {
     //TODO
-    return 0;
+    return false;
 }
 
 bool Cpu::TAY() {
     //TODO
-    return 0;
+    return false;
 }
 
 bool Cpu::CLV() {
     setStatusFlag(V_FLAG, 0);
-    return 0;
+    return false;
 }
 
 bool Cpu::INY() {
     //TODO
-    return 0;
+    return false;
 }
 
 bool Cpu::CLD() {
     setStatusFlag(D_FLAG, 0);
-    return 0;
+    return false;
 }
 
 bool Cpu::INX() {
     //TODO
-    return 0;
+    return false;
 }
 
 bool Cpu::SED() {
     setStatusFlag(D_FLAG, 1);
-    return 0;
+    return false;
 }
 
 bool Cpu::TXA() {
-    //TODO
-    return 0;
+    a = x;
+    setStatusFlag(N_FLAG, a & 0x80);
+    setStatusFlag(Z_FLAG, a == 0x00);
+    return false;
 }
 
 bool Cpu::TXS() {
-    //TODO
-    return 0;
+    sp = x;
+    return false;
 }
 
 bool Cpu::TAX() {
-    //TODO
-    return 0;
+    x = a;
+    setStatusFlag(N_FLAG, x & 0x80);
+    setStatusFlag(Z_FLAG, x == 0x00);
+    return false;
 }
 
 bool Cpu::TSX() {
-    //TODO
-    return 0;
+    x = sp;
+    setStatusFlag(N_FLAG, x & 0x80);
+    setStatusFlag(Z_FLAG, x == 0x00);
+    return false;
 }
 
 bool Cpu::DEX() {
-    //TODO
-    return 0;
+    x--;
+    setStatusFlag(N_FLAG, x & 0x80);
+    setStatusFlag(Z_FLAG, x == 0x00);
+    return false;
 }
 
 bool Cpu::NOP() {
     // literally do nothing
-    return 0;
+    return false;
 }
 
 bool Cpu::JSR() {
     //TODO
-    return 0;
+    return false;
 }
 
 bool Cpu::BIT() {
     //TODO
-    return 0;
+    return false;
 }
 
 bool Cpu::JMP() {
     //TODO
-    return 0;
+    return false;
 }
 
 bool Cpu::STY() {
     //TODO
-    return 0;
+    return false;
 }
 
 bool Cpu::LDY() {
     //TODO
     //NOTE: CAN HAVE ADDITIONAL CYCLES!
-    return 0;
+    return false;
 }
 
 bool Cpu::CPY() {
     //TODO
-    return 0;
+    return false;
 }
 
 bool Cpu::CPX() {
     //TODO
-    return 0;
+    return false;
 }
 
 bool Cpu::ORA() {
     //TODO
     //NOTE: CAN HAVE ADDITIONAL CYCLES!
-    return 0;
+    return false;
 }
 
 bool Cpu::AND() {
     //TODO
     //NOTE: CAN HAVE ADDITIONAL CYCLES!
-    return 0;
+    return false;
 }
 
 bool Cpu::EOR() {
     //TODO
     //NOTE: CAN HAVE ADDITIONAL CYCLES!
-    return 0;
+    return false;
 }
 
 bool Cpu::ADC() {
     //TODO
     //NOTE: CAN HAVE ADDITIONAL CYCLES!
-    return 0;
+    return false;
 }
 
 bool Cpu::STA() {
     //TODO
-    return 0;
+    return false;
 }
 
 bool Cpu::LDA() {
     //TODO
     //NOTE: CAN HAVE ADDITIONAL CYCLES!
-    return 0;
+    return false;
 }
 
 bool Cpu::CMP() {
     //TODO
     //NOTE: CAN HAVE ADDITIONAL CYCLES!
-    return 0;
+    return false;
 }
 
 bool Cpu::SBC() {
     //TODO
     //NOTE: CAN HAVE ADDITIONAL CYCLES!
-    return 0;
+    return false;
 }
 
 bool Cpu::ASL() {
     //TODO
-    return 0;
+    return false;
 }
 
 bool Cpu::ROL() {
     //TODO
-    return 0;
+    return false;
 }
 
 bool Cpu::LSR() {
     //TODO
-    return 0;
+    return false;
 }
 
 bool Cpu::ROR() {
     //TODO
-    return 0;
+    return false;
 }
 
 bool Cpu::STX() {
     //TODO
-    return 0;
+    return false;
 }
 
 bool Cpu::LDX() {
     //TODO
     //NOTE: CAN HAVE ADDITIONAL CYCLES!
-    return 0;
+    return false;
 }
 
 bool Cpu::DEC() {
     //TODO
-    return 0;
+    return false;
 }
 
 bool Cpu::INC() {
     //TODO
-    return 0;
+    return false;
 }
 
 bool Cpu::BPL() {
     //TODO
     //NOTE: MODIFY CYCLES DIRECTLY DUE TO WEIRD BEHAVIOR!
-    return 0;
+    return false;
 }
 bool Cpu::BMI() {
     //TODO
     //NOTE: MODIFY CYCLES DIRECTLY DUE TO WEIRD BEHAVIOR!
-    return 0;
+    return false;
 }
 bool Cpu::BVC() {
     //TODO
     //NOTE: MODIFY CYCLES DIRECTLY DUE TO WEIRD BEHAVIOR!
-    return 0;
+    return false;
 }
 bool Cpu::BVS() {
     //TODO
     //NOTE: MODIFY CYCLES DIRECTLY DUE TO WEIRD BEHAVIOR!
-    return 0;
+    return false;
 }
 bool Cpu::BCC() {
     //TODO
     //NOTE: MODIFY CYCLES DIRECTLY DUE TO WEIRD BEHAVIOR!
-    return 0;
+    return false;
 }
 bool Cpu::BCS() {
     //TODO
     //NOTE: MODIFY CYCLES DIRECTLY DUE TO WEIRD BEHAVIOR!
-    return 0;
+    return false;
 }
 bool Cpu::BNE() {
     //TODO
     //NOTE: MODIFY CYCLES DIRECTLY DUE TO WEIRD BEHAVIOR!
-    return 0;
+    return false;
 }
 bool Cpu::BEQ() {
     //TODO
     //NOTE: MODIFY CYCLES DIRECTLY DUE TO WEIRD BEHAVIOR!
-    return 0;
+    return false;
 }
