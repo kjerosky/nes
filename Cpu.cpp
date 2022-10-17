@@ -272,7 +272,8 @@ bool Cpu::absoluteYIndexed() {
 }
 
 bool Cpu::immediate() {
-    //TODO
+    fetchedByte = bus->read(pc);
+    pc++;
     return false;
 }
 
@@ -536,9 +537,10 @@ bool Cpu::STA() {
 }
 
 bool Cpu::LDA() {
-    //TODO
-    //NOTE: CAN HAVE ADDITIONAL CYCLES!
-    return false;
+    a = fetchedByte;
+    setStatusFlag(N_FLAG, a & 0x80);
+    setStatusFlag(Z_FLAG, a == 0x00);
+    return true;
 }
 
 bool Cpu::CMP() {

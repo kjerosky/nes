@@ -55,7 +55,7 @@ public:
                 displayRenderMode = SHOW_MEMORY_RENDER_MODE;
             }
         } else if (GetKey(olc::Key::SPACE).bPressed) {
-            executeNextInstructions();
+            executeNextInstruction();
         }
 
         renderDisplay();
@@ -99,7 +99,7 @@ public:
         }
     }
 
-    void executeNextInstructions() {
+    void executeNextInstruction() {
         do {
             cpu->clockTick();
         } while (!cpu->isCurrentInstructionComplete());
