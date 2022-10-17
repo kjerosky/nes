@@ -1,6 +1,7 @@
 #define OLC_PGE_APPLICATION
 #include "olcPixelGameEngine.h"
 
+#include <sstream>
 #include "TextUtils.h"
 #include "Cpu.h"
 #include "Bus.h"
@@ -31,6 +32,7 @@ public:
         bus = new Bus();
         bus->ram[0xFFFC] = 0x00;
         bus->ram[0xFFFD] = 0x80;
+        loadProgram();
 
         cpu = new Cpu(bus);
 
@@ -66,6 +68,17 @@ public:
         delete cpu;
 
         return true;
+    }
+
+    void loadProgram() {
+        std::stringstream ss;
+        ss << "38 78 F8 EA EA EA 18 58 D8 B8";
+        nesWord ramOffset = 0x8000;
+        while (!ss.eof()) {
+            std::string programByte;
+            ss >> programByte;
+            bus->ram[ramOffset++] = (nesByte)std::stoul(programByte, nullptr, 16);
+        }
     }
 
     void renderDisplay() {

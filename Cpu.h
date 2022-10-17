@@ -27,8 +27,8 @@ typedef struct {
 typedef struct {
     std::string name;
     int cycles;
-    int (Cpu::*addressMode)(void);
-    int (Cpu::*execute)(void);
+    bool (Cpu::*addressMode)(void);
+    bool (Cpu::*execute)(void);
 } Instruction;
 
 class Cpu {
@@ -61,90 +61,91 @@ private:
     nesByte status;
     nesWord pc;
 
-    nesByte opcode;
+    Instruction opcode;
     int cyclesRemaining;
 
     nesByte getStatusFlag(nesByte flag);
     void setStatusFlag(nesByte flag, bool value);
 
     nesByte fetchedByte;
+    nesWord absoluteAddress;
+    nesWord relativeAddress;
 
     std::vector<Instruction> opcodeTable;
     void initializeOpcodeTable();
 
-    int invalid();
-
     // address modes
-    int implied();
-    int absolute();
-    int absoluteXIndexed();
-    int absoluteYIndexed();
-    int immediate();
-    int indirect();
-    int indexedIndirect(); // (preindexed or X-indexed, indirect)
-    int indirectIndexed(); // (postindexed or indirect, Y-indexed)
-    int relative();
-    int zeropage();
-    int zeropageXIndexed();
-    int zeropageYIndexed();
+    bool implied();
+    bool absolute();
+    bool absoluteXIndexed();
+    bool absoluteYIndexed();
+    bool immediate();
+    bool indirect();
+    bool indexedIndirect(); // (preindexed or X-indexed, indirect)
+    bool indirectIndexed(); // (postindexed or indirect, Y-indexed)
+    bool relative();
+    bool zeropage();
+    bool zeropageXIndexed();
+    bool zeropageYIndexed();
 
     // operations
-    int BRK();
-    int RTI();
-    int RTS();
-    int PHP();
-    int CLC();
-    int PLP();
-    int SEC();
-    int PHA();
-    int CLI();
-    int PLA();
-    int SEI();
-    int DEY();
-    int TYA();
-    int TAY();
-    int CLV();
-    int INY();
-    int CLD();
-    int INX();
-    int SED();
-    int TXA();
-    int TXS();
-    int TAX();
-    int TSX();
-    int DEX();
-    int NOP();
-    int JSR();
-    int BIT();
-    int JMP();
-    int STY();
-    int LDY();
-    int CPY();
-    int CPX();
-    int ORA();
-    int AND();
-    int EOR();
-    int ADC();
-    int STA();
-    int LDA();
-    int CMP();
-    int SBC();
-    int ASL();
-    int ROL();
-    int LSR();
-    int ROR();
-    int STX();
-    int LDX();
-    int DEC();
-    int INC();
-    int BPL();
-    int BMI();
-    int BVC();
-    int BVS();
-    int BCC();
-    int BCS();
-    int BNE();
-    int BEQ();
+    bool invalid();
+    bool BRK();
+    bool RTI();
+    bool RTS();
+    bool PHP();
+    bool CLC();
+    bool PLP();
+    bool SEC();
+    bool PHA();
+    bool CLI();
+    bool PLA();
+    bool SEI();
+    bool DEY();
+    bool TYA();
+    bool TAY();
+    bool CLV();
+    bool INY();
+    bool CLD();
+    bool INX();
+    bool SED();
+    bool TXA();
+    bool TXS();
+    bool TAX();
+    bool TSX();
+    bool DEX();
+    bool NOP();
+    bool JSR();
+    bool BIT();
+    bool JMP();
+    bool STY();
+    bool LDY();
+    bool CPY();
+    bool CPX();
+    bool ORA();
+    bool AND();
+    bool EOR();
+    bool ADC();
+    bool STA();
+    bool LDA();
+    bool CMP();
+    bool SBC();
+    bool ASL();
+    bool ROL();
+    bool LSR();
+    bool ROR();
+    bool STX();
+    bool LDX();
+    bool DEC();
+    bool INC();
+    bool BPL();
+    bool BMI();
+    bool BVC();
+    bool BVS();
+    bool BCC();
+    bool BCS();
+    bool BNE();
+    bool BEQ();
 };
 
 #endif

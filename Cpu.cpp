@@ -214,14 +214,16 @@ void Cpu::reset() {
 
 void Cpu::clockTick() {
     if (cyclesRemaining <= 0) {
-        opcode = bus->read(pc);
+        nesByte opcodeByte = bus->read(pc);
         pc++;
 
-        //TODO LOOKUP OPCODE
-
-        //TODO GET ADDITIONAL CYCLES FROM ADDRESS MODE
-        //TODO GET ADDITIONAL CYCLES FROM OPERATION
-        //TODO ADD ADDITIONAL CYCLES TO REMAINING CYCLES
+        opcode = opcodeTable[opcodeByte];
+        cyclesRemaining = opcode.cycles;
+        bool addressModeRequiresAdditionalCycles = (this->*opcode.addressMode)();
+        bool operationExecutionRequiresAdditionalCycles = (this->*opcode.execute)();
+        if (addressModeRequiresAdditionalCycles && operationExecutionRequiresAdditionalCycles) {
+            cyclesRemaining++;
+        }
     }
 
     cyclesRemaining--;
@@ -243,362 +245,367 @@ void Cpu::setStatusFlag(nesByte flag, bool value) {
     }
 }
 
-int Cpu::invalid() {
-    return 0;
-}
+
 
 // address modes
 
-int Cpu::implied() {
+bool Cpu::implied() {
     fetchedByte = a;
     return 0;
 }
 
-int Cpu::absolute() {
+bool Cpu::absolute() {
     //TODO
     return 0;
 }
 
-int Cpu::absoluteXIndexed() {
+bool Cpu::absoluteXIndexed() {
     //TODO
     //NOTE: CAN HAVE ADDITIONAL CYCLES!
     return 0;
 }
 
-int Cpu::absoluteYIndexed() {
+bool Cpu::absoluteYIndexed() {
     //TODO
     //NOTE: CAN HAVE ADDITIONAL CYCLES!
     return 0;
 }
 
-int Cpu::immediate() {
+bool Cpu::immediate() {
     //TODO
     return 0;
 }
 
-int Cpu::indirect() {
+bool Cpu::indirect() {
     //TODO
     return 0;
 }
 
-int Cpu::indexedIndirect() {
+bool Cpu::indexedIndirect() {
     //TODO
     return 0;
 }
 
-int Cpu::indirectIndexed() {
+bool Cpu::indirectIndexed() {
     //TODO
     //NOTE: CAN HAVE ADDITIONAL CYCLES!
     return 0;
 }
 
-int Cpu::relative() {
+bool Cpu::relative() {
     //TODO
     return 0;
 }
 
-int Cpu::zeropage() {
+bool Cpu::zeropage() {
     //TODO
     return 0;
 }
 
-int Cpu::zeropageXIndexed() {
+bool Cpu::zeropageXIndexed() {
     //TODO
     return 0;
 }
 
-int Cpu::zeropageYIndexed() {
+bool Cpu::zeropageYIndexed() {
     //TODO
     return 0;
 }
+
+
 
 // operations
 
-int Cpu::BRK() {
+bool Cpu::invalid() {
+    // do nothing for invalid operations
+    return 0;
+}
+
+bool Cpu::BRK() {
     //TODO
     return 0;
 }
 
-int Cpu::RTI() {
+bool Cpu::RTI() {
     //TODO
     return 0;
 }
 
-int Cpu::RTS() {
+bool Cpu::RTS() {
     //TODO
     return 0;
 }
 
-int Cpu::PHP() {
+bool Cpu::PHP() {
     //TODO
     return 0;
 }
 
-int Cpu::CLC() {
+bool Cpu::CLC() {
+    setStatusFlag(C_FLAG, 0);
+    return 0;
+}
+
+bool Cpu::PLP() {
     //TODO
     return 0;
 }
 
-int Cpu::PLP() {
+bool Cpu::SEC() {
+    setStatusFlag(C_FLAG, 1);
+    return 0;
+}
+
+bool Cpu::PHA() {
     //TODO
     return 0;
 }
 
-int Cpu::SEC() {
+bool Cpu::CLI() {
+    setStatusFlag(I_FLAG, 0);
+    return 0;
+}
+
+bool Cpu::PLA() {
     //TODO
     return 0;
 }
 
-int Cpu::PHA() {
+bool Cpu::SEI() {
+    setStatusFlag(I_FLAG, 1);
+    return 0;
+}
+
+bool Cpu::DEY() {
     //TODO
     return 0;
 }
 
-int Cpu::CLI() {
+bool Cpu::TYA() {
     //TODO
     return 0;
 }
 
-int Cpu::PLA() {
+bool Cpu::TAY() {
     //TODO
     return 0;
 }
 
-int Cpu::SEI() {
+bool Cpu::CLV() {
+    setStatusFlag(V_FLAG, 0);
+    return 0;
+}
+
+bool Cpu::INY() {
     //TODO
     return 0;
 }
 
-int Cpu::DEY() {
+bool Cpu::CLD() {
+    setStatusFlag(D_FLAG, 0);
+    return 0;
+}
+
+bool Cpu::INX() {
     //TODO
     return 0;
 }
 
-int Cpu::TYA() {
+bool Cpu::SED() {
+    setStatusFlag(D_FLAG, 1);
+    return 0;
+}
+
+bool Cpu::TXA() {
     //TODO
     return 0;
 }
 
-int Cpu::TAY() {
+bool Cpu::TXS() {
     //TODO
     return 0;
 }
 
-int Cpu::CLV() {
+bool Cpu::TAX() {
     //TODO
     return 0;
 }
 
-int Cpu::INY() {
+bool Cpu::TSX() {
     //TODO
     return 0;
 }
 
-int Cpu::CLD() {
+bool Cpu::DEX() {
     //TODO
     return 0;
 }
 
-int Cpu::INX() {
+bool Cpu::NOP() {
+    // literally do nothing
+    return 0;
+}
+
+bool Cpu::JSR() {
     //TODO
     return 0;
 }
 
-int Cpu::SED() {
+bool Cpu::BIT() {
     //TODO
     return 0;
 }
 
-int Cpu::TXA() {
+bool Cpu::JMP() {
     //TODO
     return 0;
 }
 
-int Cpu::TXS() {
+bool Cpu::STY() {
     //TODO
     return 0;
 }
 
-int Cpu::TAX() {
-    //TODO
-    return 0;
-}
-
-int Cpu::TSX() {
-    //TODO
-    return 0;
-}
-
-int Cpu::DEX() {
-    //TODO
-    return 0;
-}
-
-int Cpu::NOP() {
-    //TODO
-    return 0;
-}
-
-int Cpu::JSR() {
-    //TODO
-    return 0;
-}
-
-int Cpu::BIT() {
-    //TODO
-    return 0;
-}
-
-int Cpu::JMP() {
-    //TODO
-    return 0;
-}
-
-int Cpu::STY() {
-    //TODO
-    return 0;
-}
-
-int Cpu::LDY() {
-    //TODO
-    //NOTE: CAN HAVE ADDITIONAL CYCLES!
-    return 0;
-}
-
-int Cpu::CPY() {
-    //TODO
-    return 0;
-}
-
-int Cpu::CPX() {
-    //TODO
-    return 0;
-}
-
-int Cpu::ORA() {
+bool Cpu::LDY() {
     //TODO
     //NOTE: CAN HAVE ADDITIONAL CYCLES!
     return 0;
 }
 
-int Cpu::AND() {
+bool Cpu::CPY() {
+    //TODO
+    return 0;
+}
+
+bool Cpu::CPX() {
+    //TODO
+    return 0;
+}
+
+bool Cpu::ORA() {
     //TODO
     //NOTE: CAN HAVE ADDITIONAL CYCLES!
     return 0;
 }
 
-int Cpu::EOR() {
+bool Cpu::AND() {
     //TODO
     //NOTE: CAN HAVE ADDITIONAL CYCLES!
     return 0;
 }
 
-int Cpu::ADC() {
+bool Cpu::EOR() {
     //TODO
     //NOTE: CAN HAVE ADDITIONAL CYCLES!
     return 0;
 }
 
-int Cpu::STA() {
-    //TODO
-    return 0;
-}
-
-int Cpu::LDA() {
+bool Cpu::ADC() {
     //TODO
     //NOTE: CAN HAVE ADDITIONAL CYCLES!
     return 0;
 }
 
-int Cpu::CMP() {
+bool Cpu::STA() {
+    //TODO
+    return 0;
+}
+
+bool Cpu::LDA() {
     //TODO
     //NOTE: CAN HAVE ADDITIONAL CYCLES!
     return 0;
 }
 
-int Cpu::SBC() {
+bool Cpu::CMP() {
     //TODO
     //NOTE: CAN HAVE ADDITIONAL CYCLES!
     return 0;
 }
 
-int Cpu::ASL() {
-    //TODO
-    return 0;
-}
-
-int Cpu::ROL() {
-    //TODO
-    return 0;
-}
-
-int Cpu::LSR() {
-    //TODO
-    return 0;
-}
-
-int Cpu::ROR() {
-    //TODO
-    return 0;
-}
-
-int Cpu::STX() {
-    //TODO
-    return 0;
-}
-
-int Cpu::LDX() {
+bool Cpu::SBC() {
     //TODO
     //NOTE: CAN HAVE ADDITIONAL CYCLES!
     return 0;
 }
 
-int Cpu::DEC() {
+bool Cpu::ASL() {
     //TODO
     return 0;
 }
 
-int Cpu::INC() {
+bool Cpu::ROL() {
     //TODO
     return 0;
 }
 
-int Cpu::BPL() {
+bool Cpu::LSR() {
+    //TODO
+    return 0;
+}
+
+bool Cpu::ROR() {
+    //TODO
+    return 0;
+}
+
+bool Cpu::STX() {
+    //TODO
+    return 0;
+}
+
+bool Cpu::LDX() {
+    //TODO
+    //NOTE: CAN HAVE ADDITIONAL CYCLES!
+    return 0;
+}
+
+bool Cpu::DEC() {
+    //TODO
+    return 0;
+}
+
+bool Cpu::INC() {
+    //TODO
+    return 0;
+}
+
+bool Cpu::BPL() {
     //TODO
     //NOTE: MODIFY CYCLES DIRECTLY DUE TO WEIRD BEHAVIOR!
     return 0;
 }
-int Cpu::BMI() {
+bool Cpu::BMI() {
     //TODO
     //NOTE: MODIFY CYCLES DIRECTLY DUE TO WEIRD BEHAVIOR!
     return 0;
 }
-int Cpu::BVC() {
+bool Cpu::BVC() {
     //TODO
     //NOTE: MODIFY CYCLES DIRECTLY DUE TO WEIRD BEHAVIOR!
     return 0;
 }
-int Cpu::BVS() {
+bool Cpu::BVS() {
     //TODO
     //NOTE: MODIFY CYCLES DIRECTLY DUE TO WEIRD BEHAVIOR!
     return 0;
 }
-int Cpu::BCC() {
+bool Cpu::BCC() {
     //TODO
     //NOTE: MODIFY CYCLES DIRECTLY DUE TO WEIRD BEHAVIOR!
     return 0;
 }
-int Cpu::BCS() {
+bool Cpu::BCS() {
     //TODO
     //NOTE: MODIFY CYCLES DIRECTLY DUE TO WEIRD BEHAVIOR!
     return 0;
 }
-int Cpu::BNE() {
+bool Cpu::BNE() {
     //TODO
     //NOTE: MODIFY CYCLES DIRECTLY DUE TO WEIRD BEHAVIOR!
     return 0;
 }
-int Cpu::BEQ() {
+bool Cpu::BEQ() {
     //TODO
     //NOTE: MODIFY CYCLES DIRECTLY DUE TO WEIRD BEHAVIOR!
     return 0;
