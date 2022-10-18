@@ -487,7 +487,9 @@ bool Cpu::JSR() {
 }
 
 bool Cpu::BIT() {
-    //TODO
+    setStatusFlag(N_FLAG, fetchedByte & (1 << 7));
+    setStatusFlag(Z_FLAG, (a & fetchedByte) == 0x00);
+    setStatusFlag(V_FLAG, fetchedByte & (1 << 6));
     return false;
 }
 
@@ -565,9 +567,9 @@ bool Cpu::LDA() {
 
 bool Cpu::CMP() {
     nesByte temp = a - fetchedByte;
-    setStatusFlag(C_FLAG, a >= fetchedByte);
-    setStatusFlag(Z_FLAG, temp == 0x00);
     setStatusFlag(N_FLAG, temp & 0x80);
+    setStatusFlag(Z_FLAG, temp == 0x00);
+    setStatusFlag(C_FLAG, a >= fetchedByte);
     return true;
 }
 
@@ -578,22 +580,62 @@ bool Cpu::SBC() {
 }
 
 bool Cpu::ASL() {
-    //TODO
+    nesByte temp = fetchedByte << 1;
+    setStatusFlag(N_FLAG, temp & 0x80);
+    setStatusFlag(Z_FLAG, temp == 0x00);
+    setStatusFlag(C_FLAG, fetchedByte & 0x80);
+
+    if (opcode.addressMode == &Cpu::implied) {
+        a = temp;
+    } else {
+        bus->write(absoluteAddress, temp);
+    }
+
     return false;
 }
 
 bool Cpu::ROL() {
-    //TODO
+    nesByte temp = (fetchedByte << 1) | getStatusFlag(C_FLAG);
+    setStatusFlag(N_FLAG, temp & 0x80);
+    setStatusFlag(Z_FLAG, temp == 0x00);
+    setStatusFlag(C_FLAG, fetchedByte & 0x80);
+
+    if (opcode.addressMode == &Cpu::implied) {
+        a = temp;
+    } else {
+        bus->write(absoluteAddress, temp);
+    }
+
     return false;
 }
 
 bool Cpu::LSR() {
-    //TODO
+    nesByte temp = fetchedByte >> 1;
+    setStatusFlag(N_FLAG, 0);
+    setStatusFlag(Z_FLAG, temp == 0x00);
+    setStatusFlag(C_FLAG, fetchedByte & 0x01);
+
+    if (opcode.addressMode == &Cpu::implied) {
+        a = temp;
+    } else {
+        bus->write(absoluteAddress, temp);
+    }
+
     return false;
 }
 
 bool Cpu::ROR() {
-    //TODO
+    nesByte temp = (getStatusFlag(C_FLAG) << 7) | (fetchedByte >> 1);
+    setStatusFlag(N_FLAG, temp & 0x80);
+    setStatusFlag(Z_FLAG, temp == 0x00);
+    setStatusFlag(C_FLAG, fetchedByte & 0x01);
+
+    if (opcode.addressMode == &Cpu::implied) {
+        a = temp;
+    } else {
+        bus->write(absoluteAddress, temp);
+    }
+
     return false;
 }
 
