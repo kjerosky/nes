@@ -267,11 +267,7 @@ bool Cpu::absoluteXIndexed() {
     absoluteAddress = ((hiAddressByte << 8) | loAddressByte) + x;
     fetchedByte = bus->read(absoluteAddress);
 
-    if ((absoluteAddress & 0xFF00) != (hiAddressByte << 8)) {
-        return true;
-    } else {
-        return false;
-    }
+    return (absoluteAddress & 0xFF00) != (hiAddressByte << 8);
 }
 
 bool Cpu::absoluteYIndexed() {
@@ -280,11 +276,7 @@ bool Cpu::absoluteYIndexed() {
     absoluteAddress = ((hiAddressByte << 8) | loAddressByte) + y;
     fetchedByte = bus->read(absoluteAddress);
 
-    if ((absoluteAddress & 0xFF00) != (hiAddressByte << 8)) {
-        return true;
-    } else {
-        return false;
-    }
+    return (absoluteAddress & 0xFF00) != (hiAddressByte << 8);
 }
 
 bool Cpu::immediate() {
@@ -505,42 +497,52 @@ bool Cpu::JMP() {
 }
 
 bool Cpu::STY() {
-    //TODO
+    bus->write(absoluteAddress, y);
     return false;
 }
 
 bool Cpu::LDY() {
-    //TODO
-    //NOTE: CAN HAVE ADDITIONAL CYCLES!
-    return false;
+    y = fetchedByte;
+    setStatusFlag(N_FLAG, y & 0x80);
+    setStatusFlag(Z_FLAG, y == 0x00);
+    return true;
 }
 
 bool Cpu::CPY() {
-    //TODO
+    nesByte temp = y - fetchedByte;
+    setStatusFlag(C_FLAG, y >= fetchedByte);
+    setStatusFlag(Z_FLAG, temp == 0x00);
+    setStatusFlag(N_FLAG, temp & 0x80);
     return false;
 }
 
 bool Cpu::CPX() {
-    //TODO
+    nesByte temp = x - fetchedByte;
+    setStatusFlag(C_FLAG, x >= fetchedByte);
+    setStatusFlag(Z_FLAG, temp == 0x00);
+    setStatusFlag(N_FLAG, temp & 0x80);
     return false;
 }
 
 bool Cpu::ORA() {
-    //TODO
-    //NOTE: CAN HAVE ADDITIONAL CYCLES!
-    return false;
+    a |= fetchedByte;
+    setStatusFlag(N_FLAG, a & 0x80);
+    setStatusFlag(Z_FLAG, a == 0x00);
+    return true;
 }
 
 bool Cpu::AND() {
-    //TODO
-    //NOTE: CAN HAVE ADDITIONAL CYCLES!
-    return false;
+    a &= fetchedByte;
+    setStatusFlag(N_FLAG, a & 0x80);
+    setStatusFlag(Z_FLAG, a == 0x00);
+    return true;
 }
 
 bool Cpu::EOR() {
-    //TODO
-    //NOTE: CAN HAVE ADDITIONAL CYCLES!
-    return false;
+    a ^= fetchedByte;
+    setStatusFlag(N_FLAG, a & 0x80);
+    setStatusFlag(Z_FLAG, a == 0x00);
+    return true;
 }
 
 bool Cpu::ADC() {
@@ -550,7 +552,7 @@ bool Cpu::ADC() {
 }
 
 bool Cpu::STA() {
-    //TODO
+    bus->write(absoluteAddress, a);
     return false;
 }
 
@@ -562,9 +564,11 @@ bool Cpu::LDA() {
 }
 
 bool Cpu::CMP() {
-    //TODO
-    //NOTE: CAN HAVE ADDITIONAL CYCLES!
-    return false;
+    nesByte temp = a - fetchedByte;
+    setStatusFlag(C_FLAG, a >= fetchedByte);
+    setStatusFlag(Z_FLAG, temp == 0x00);
+    setStatusFlag(N_FLAG, temp & 0x80);
+    return true;
 }
 
 bool Cpu::SBC() {
@@ -606,12 +610,18 @@ bool Cpu::LDX() {
 }
 
 bool Cpu::DEC() {
-    //TODO
+    fetchedByte--;
+    bus->write(absoluteAddress, fetchedByte);
+    setStatusFlag(N_FLAG, fetchedByte & 0x80);
+    setStatusFlag(Z_FLAG, fetchedByte == 0x00);
     return false;
 }
 
 bool Cpu::INC() {
-    //TODO
+    fetchedByte++;
+    bus->write(absoluteAddress, fetchedByte);
+    setStatusFlag(N_FLAG, fetchedByte & 0x80);
+    setStatusFlag(Z_FLAG, fetchedByte == 0x00);
     return false;
 }
 
