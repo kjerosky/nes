@@ -256,20 +256,35 @@ bool Cpu::implied() {
 bool Cpu::absolute() {
     nesWord loAddressByte = bus->read(pc++);
     nesWord hiAddressByte = bus->read(pc++);
-    fetchedByte = bus->read((hiAddressByte << 8) | loAddressByte);
+    absoluteAddress = (hiAddressByte << 8) | loAddressByte;
+    fetchedByte = bus->read(absoluteAddress);
     return false;
 }
 
 bool Cpu::absoluteXIndexed() {
-    //TODO
-    //NOTE: CAN HAVE ADDITIONAL CYCLES!
-    return false;
+    nesWord loAddressByte = bus->read(pc++);
+    nesWord hiAddressByte = bus->read(pc++);
+    absoluteAddress = ((hiAddressByte << 8) | loAddressByte) + x;
+    fetchedByte = bus->read(absoluteAddress);
+
+    if ((absoluteAddress & 0xFF00) != (hiAddressByte << 8)) {
+        return true;
+    } else {
+        return false;
+    }
 }
 
 bool Cpu::absoluteYIndexed() {
-    //TODO
-    //NOTE: CAN HAVE ADDITIONAL CYCLES!
-    return false;
+    nesWord loAddressByte = bus->read(pc++);
+    nesWord hiAddressByte = bus->read(pc++);
+    absoluteAddress = ((hiAddressByte << 8) | loAddressByte) + y;
+    fetchedByte = bus->read(absoluteAddress);
+
+    if ((absoluteAddress & 0xFF00) != (hiAddressByte << 8)) {
+        return true;
+    } else {
+        return false;
+    }
 }
 
 bool Cpu::immediate() {
