@@ -305,13 +305,14 @@ bool Cpu::zeropage() {
 }
 
 bool Cpu::zeropageXIndexed() {
-    absoluteAddress = bus->read(pc++) + x;
-    fetchedByte = bus->read(absoluteAddress & 0xFF);
+    absoluteAddress = (bus->read(pc++) + x) & 0xFF;
+    fetchedByte = bus->read(absoluteAddress);
     return false;
 }
 
 bool Cpu::zeropageYIndexed() {
-    //TODO
+    absoluteAddress = (bus->read(pc++) + y) & 0xFF;
+    fetchedByte = bus->read(absoluteAddress);
     return false;
 }
 
@@ -578,14 +579,15 @@ bool Cpu::ROR() {
 }
 
 bool Cpu::STX() {
-    //TODO
+    bus->write(absoluteAddress, x);
     return false;
 }
 
 bool Cpu::LDX() {
-    //TODO
-    //NOTE: CAN HAVE ADDITIONAL CYCLES!
-    return false;
+    x = fetchedByte;
+    setStatusFlag(N_FLAG, x & 0x80);
+    setStatusFlag(Z_FLAG, x == 0x00);
+    return true;
 }
 
 bool Cpu::DEC() {
