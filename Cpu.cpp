@@ -301,25 +301,32 @@ bool Cpu::indirectIndexed() {
 }
 
 bool Cpu::relative() {
-    //TODO
+    relativeAddress = bus->read(pc++);
+    if (relativeAddress & 0x0080) {
+        relativeAddress |= 0xFF00;
+    }
+
     return false;
 }
 
 bool Cpu::zeropage() {
     absoluteAddress = bus->read(pc++);
     fetchedByte = bus->read(absoluteAddress);
+
     return false;
 }
 
 bool Cpu::zeropageXIndexed() {
     absoluteAddress = (bus->read(pc++) + x) & 0xFF;
     fetchedByte = bus->read(absoluteAddress);
+
     return false;
 }
 
 bool Cpu::zeropageYIndexed() {
     absoluteAddress = (bus->read(pc++) + y) & 0xFF;
     fetchedByte = bus->read(absoluteAddress);
+
     return false;
 }
 
@@ -679,42 +686,114 @@ bool Cpu::INC() {
 }
 
 bool Cpu::BPL() {
-    //TODO
-    //NOTE: MODIFY CYCLES DIRECTLY DUE TO WEIRD BEHAVIOR!
+    if (!getStatusFlag(N_FLAG)) {
+        cyclesRemaining++;
+
+        nesWord nextAddress = pc + relativeAddress;
+        if ((nextAddress & 0xFF00) != (pc & 0xFF00)) {
+            cyclesRemaining++;
+        }
+
+        pc = nextAddress;
+    }
+
     return false;
 }
 bool Cpu::BMI() {
-    //TODO
-    //NOTE: MODIFY CYCLES DIRECTLY DUE TO WEIRD BEHAVIOR!
+    if (getStatusFlag(N_FLAG)) {
+        cyclesRemaining++;
+
+        nesWord nextAddress = pc + relativeAddress;
+        if ((nextAddress & 0xFF00) != (pc & 0xFF00)) {
+            cyclesRemaining++;
+        }
+
+        pc = nextAddress;
+    }
+
     return false;
 }
 bool Cpu::BVC() {
-    //TODO
-    //NOTE: MODIFY CYCLES DIRECTLY DUE TO WEIRD BEHAVIOR!
+    if (!getStatusFlag(V_FLAG)) {
+        cyclesRemaining++;
+
+        nesWord nextAddress = pc + relativeAddress;
+        if ((nextAddress & 0xFF00) != (pc & 0xFF00)) {
+            cyclesRemaining++;
+        }
+
+        pc = nextAddress;
+    }
+
     return false;
 }
 bool Cpu::BVS() {
-    //TODO
-    //NOTE: MODIFY CYCLES DIRECTLY DUE TO WEIRD BEHAVIOR!
+    if (getStatusFlag(V_FLAG)) {
+        cyclesRemaining++;
+
+        nesWord nextAddress = pc + relativeAddress;
+        if ((nextAddress & 0xFF00) != (pc & 0xFF00)) {
+            cyclesRemaining++;
+        }
+
+        pc = nextAddress;
+    }
+
     return false;
 }
 bool Cpu::BCC() {
-    //TODO
-    //NOTE: MODIFY CYCLES DIRECTLY DUE TO WEIRD BEHAVIOR!
+    if (!getStatusFlag(C_FLAG)) {
+        cyclesRemaining++;
+
+        nesWord nextAddress = pc + relativeAddress;
+        if ((nextAddress & 0xFF00) != (pc & 0xFF00)) {
+            cyclesRemaining++;
+        }
+
+        pc = nextAddress;
+    }
+
     return false;
 }
 bool Cpu::BCS() {
-    //TODO
-    //NOTE: MODIFY CYCLES DIRECTLY DUE TO WEIRD BEHAVIOR!
+    if (getStatusFlag(C_FLAG)) {
+        cyclesRemaining++;
+
+        nesWord nextAddress = pc + relativeAddress;
+        if ((nextAddress & 0xFF00) != (pc & 0xFF00)) {
+            cyclesRemaining++;
+        }
+
+        pc = nextAddress;
+    }
+
     return false;
 }
 bool Cpu::BNE() {
-    //TODO
-    //NOTE: MODIFY CYCLES DIRECTLY DUE TO WEIRD BEHAVIOR!
+    if (!getStatusFlag(Z_FLAG)) {
+        cyclesRemaining++;
+
+        nesWord nextAddress = pc + relativeAddress;
+        if ((nextAddress & 0xFF00) != (pc & 0xFF00)) {
+            cyclesRemaining++;
+        }
+
+        pc = nextAddress;
+    }
+
     return false;
 }
 bool Cpu::BEQ() {
-    //TODO
-    //NOTE: MODIFY CYCLES DIRECTLY DUE TO WEIRD BEHAVIOR!
+    if (getStatusFlag(Z_FLAG)) {
+        cyclesRemaining++;
+
+        nesWord nextAddress = pc + relativeAddress;
+        if ((nextAddress & 0xFF00) != (pc & 0xFF00)) {
+            cyclesRemaining++;
+        }
+
+        pc = nextAddress;
+    }
+
     return false;
 }
