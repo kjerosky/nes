@@ -87,7 +87,8 @@ public:
 
         if (displayRenderMode == SHOW_MEMORY_RENDER_MODE) {
             drawPageData(8, 8, 0x0000);
-            drawPageData(8, 152, 0x8000);
+            drawPageData(8, 152, 0x0100);
+            drawPageData(8, 296, 0x8000);
         } else if (displayRenderMode == SHOW_SCREEN_RENDER_MODE) {
             //TODO fake some noise for now...need to get this from the ppu in the future
             for (int y = 0; y < 240; y++) {

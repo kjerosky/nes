@@ -350,7 +350,14 @@ bool Cpu::RTI() {
 }
 
 bool Cpu::RTS() {
-    //TODO
+    sp++;
+    nesWord newPcLow = bus->read(0x0100 + sp);
+    sp++;
+    nesWord newPcHigh = bus->read(0x0100 + sp);
+
+    pc = (newPcHigh << 8) | newPcLow;
+    pc++;
+
     return false;
 }
 
@@ -489,7 +496,17 @@ bool Cpu::NOP() {
 }
 
 bool Cpu::JSR() {
-    //TODO
+    pc--;
+    nesByte savedPcLow = pc & 0x00FF;
+    nesByte savedPcHigh = (pc >> 8) & 0x00FF;
+
+    bus->write(0x0100 + sp, savedPcHigh);
+    sp--;
+    bus->write(0x0100 + sp, savedPcLow);
+    sp--;
+
+    pc = absoluteAddress;
+
     return false;
 }
 
