@@ -285,7 +285,21 @@ bool Cpu::immediate() {
 }
 
 bool Cpu::indirect() {
-    //TODO
+    nesWord loPointerAddress = bus->read(pc++);
+    nesWord hiPointerAddress = bus->read(pc++);
+    nesWord pointerAddress = (hiPointerAddress << 8) | loPointerAddress;
+
+    nesWord newAbsoluteAddressLo = bus->read(pointerAddress);
+    nesWord newAbsoluteAddressHi;
+    if (loPointerAddress == 0xFF) {
+        // simulate indirect jump page boundary bug (https://www.nesdev.org/wiki/Errata#CPU)
+        newAbsoluteAddressHi = bus->read(pointerAddress & 0xFF00);
+    } else {
+        newAbsoluteAddressHi = bus->read(pointerAddress + 1);
+    }
+
+    absoluteAddress = (newAbsoluteAddressHi << 8) | newAbsoluteAddressLo;
+
     return false;
 }
 
@@ -518,7 +532,8 @@ bool Cpu::BIT() {
 }
 
 bool Cpu::JMP() {
-    //TODO
+    pc = absoluteAddress;
+
     return false;
 }
 
