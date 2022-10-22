@@ -592,9 +592,21 @@ bool Cpu::CMP() {
 }
 
 bool Cpu::SBC() {
-    //TODO
-    //NOTE: CAN HAVE ADDITIONAL CYCLES!
-    return false;
+    nesByte onesComplementFetchedByte = ~fetchedByte;
+    nesWord result = a + onesComplementFetchedByte + getStatusFlag(C_FLAG);
+    nesByte byteResult = result;
+    bool signResult = byteResult & 0x80;
+    bool signOperand1 = a & 0x80;
+    bool signOperand2 = onesComplementFetchedByte & 0x80;
+
+    setStatusFlag(N_FLAG, signResult);
+    setStatusFlag(V_FLAG, signOperand1 == signOperand2 && signOperand1 != signResult);
+    setStatusFlag(Z_FLAG, byteResult == 0x00);
+    setStatusFlag(C_FLAG, result & 0xFF00);
+
+    a = byteResult;
+
+    return true;
 }
 
 bool Cpu::ASL() {
