@@ -6,6 +6,7 @@ Cpu::Cpu(Bus* bus) {
     initializeOpcodeTable();
 
     reset();
+    cyclesRemaining = 0;
 }
 
 Cpu::~Cpu() {
@@ -209,9 +210,7 @@ void Cpu::reset() {
     sp = 0xFF;
     status = 0;
 
-    // Technically this should be 8 cycles, but on a reset we want to immediately
-    // be able to start execution without having to pump out the leftover cycles.
-    cyclesRemaining = 0;
+    cyclesRemaining = 8;
 }
 
 void Cpu::irq() {
@@ -232,9 +231,7 @@ void Cpu::irq() {
     nesWord newPcHi = bus->read(0xFFFF);
     pc = (newPcHi << 8) | newPcLo;
 
-    // Not sure if this should just be 0 like the reset method or not...
-    // technically this should be 7 cycles.
-    cyclesRemaining = 0;
+    cyclesRemaining = 7;
 }
 
 void Cpu::clockTick() {
@@ -255,6 +252,12 @@ void Cpu::clockTick() {
 
 bool Cpu::isCurrentInstructionComplete() {
     return cyclesRemaining <= 0;
+}
+
+void Cpu::drainSingleCycle() {
+    if (cyclesRemaining > 0) {
+        cyclesRemaining--;
+    }
 }
 
 nesByte Cpu::getStatusFlag(nesByte flag) {

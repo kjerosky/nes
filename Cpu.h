@@ -42,6 +42,7 @@ public:
     void irq();
     void clockTick();
     bool isCurrentInstructionComplete();
+    void drainSingleCycle();
     CpuDebugInfo getDebugInfo();
 
 private:

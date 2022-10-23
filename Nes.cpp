@@ -50,8 +50,14 @@ public:
             return false;
         } else if (GetKey(olc::Key::R).bPressed) {
             cpu->reset();
+            while (!cpu->isCurrentInstructionComplete()) {
+                cpu->drainSingleCycle();
+            }
         } else if (GetKey(olc::Key::I).bPressed) {
             cpu->irq();
+            while (!cpu->isCurrentInstructionComplete()) {
+                cpu->drainSingleCycle();
+            }
         } else if (GetKey(olc::Key::M).bPressed) {
             if (displayRenderMode == SHOW_MEMORY_RENDER_MODE) {
                 displayRenderMode = SHOW_SCREEN_RENDER_MODE;
