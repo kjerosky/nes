@@ -119,14 +119,14 @@ void Cpu::initializeOpcodeTable() {
     opcodeTable[0xC1] = {"CMP", 6, &Cpu::xIndexedZeropageIndirect, &Cpu::CMP};
     opcodeTable[0xE1] = {"SBC", 6, &Cpu::xIndexedZeropageIndirect, &Cpu::SBC};
 
-    opcodeTable[0x11] = {"ORA", 5, &Cpu::indirectIndexed, &Cpu::ORA};
-    opcodeTable[0x31] = {"AND", 5, &Cpu::indirectIndexed, &Cpu::AND};
-    opcodeTable[0x51] = {"EOR", 5, &Cpu::indirectIndexed, &Cpu::EOR};
-    opcodeTable[0x71] = {"ADC", 5, &Cpu::indirectIndexed, &Cpu::ADC};
-    opcodeTable[0x91] = {"STA", 6, &Cpu::indirectIndexed, &Cpu::STA};
-    opcodeTable[0xB1] = {"LDA", 5, &Cpu::indirectIndexed, &Cpu::LDA};
-    opcodeTable[0xD1] = {"CMP", 5, &Cpu::indirectIndexed, &Cpu::CMP};
-    opcodeTable[0xF1] = {"SBC", 5, &Cpu::indirectIndexed, &Cpu::SBC};
+    opcodeTable[0x11] = {"ORA", 5, &Cpu::zeropageIndirectYIndexed, &Cpu::ORA};
+    opcodeTable[0x31] = {"AND", 5, &Cpu::zeropageIndirectYIndexed, &Cpu::AND};
+    opcodeTable[0x51] = {"EOR", 5, &Cpu::zeropageIndirectYIndexed, &Cpu::EOR};
+    opcodeTable[0x71] = {"ADC", 5, &Cpu::zeropageIndirectYIndexed, &Cpu::ADC};
+    opcodeTable[0x91] = {"STA", 6, &Cpu::zeropageIndirectYIndexed, &Cpu::STA};
+    opcodeTable[0xB1] = {"LDA", 5, &Cpu::zeropageIndirectYIndexed, &Cpu::LDA};
+    opcodeTable[0xD1] = {"CMP", 5, &Cpu::zeropageIndirectYIndexed, &Cpu::CMP};
+    opcodeTable[0xF1] = {"SBC", 5, &Cpu::zeropageIndirectYIndexed, &Cpu::SBC};
 
     opcodeTable[0x10] = {"BPL", 2, &Cpu::relative, &Cpu::BPL};
     opcodeTable[0x30] = {"BMI", 2, &Cpu::relative, &Cpu::BMI};
@@ -315,10 +315,16 @@ bool Cpu::xIndexedZeropageIndirect() {
     return false;
 }
 
-bool Cpu::indirectIndexed() {
-    //TODO
-    //NOTE: CAN HAVE ADDITIONAL CYCLES!
-    return false;
+bool Cpu::zeropageIndirectYIndexed() {
+    nesWord zeroPageAddress = bus->read(pc++);
+
+    nesWord loPointerAddress = bus->read(zeroPageAddress & 0x00FF);
+    nesWord hiPointerAddress = bus->read((zeroPageAddress + 1) & 0x00FF);
+    absoluteAddress = ((hiPointerAddress << 8) | loPointerAddress) + y;
+
+    fetchedByte = bus->read(absoluteAddress);
+
+    return (absoluteAddress & 0xFF00) != (hiPointerAddress << 8);
 }
 
 bool Cpu::relative() {
