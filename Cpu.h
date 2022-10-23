@@ -39,6 +39,7 @@ public:
     ~Cpu();
 
     void reset();
+    void irq();
     void clockTick();
     bool isCurrentInstructionComplete();
     CpuDebugInfo getDebugInfo();

@@ -209,6 +209,31 @@ void Cpu::reset() {
     sp = 0xFF;
     status = 0;
 
+    // Technically this should be 8 cycles, but on a reset we want to immediately
+    // be able to start execution without having to pump out the leftover cycles.
+    cyclesRemaining = 0;
+}
+
+void Cpu::irq() {
+    if (getStatusFlag(I_FLAG)) {
+        return;
+    }
+
+    bus->write(0x0100 + sp, (pc >> 8) & 0x00FF);
+    sp--;
+    bus->write(0x0100 + sp, pc & 0x00FF);
+    sp--;
+    bus->write(0x0100 + sp, status | U_FLAG);
+    sp--;
+
+    setStatusFlag(I_FLAG, true);
+
+    nesWord newPcLo = bus->read(0xFFFE);
+    nesWord newPcHi = bus->read(0xFFFF);
+    pc = (newPcHi << 8) | newPcLo;
+
+    // Not sure if this should just be 0 like the reset method or not...
+    // technically this should be 7 cycles.
     cyclesRemaining = 0;
 }
 
@@ -367,12 +392,35 @@ bool Cpu::invalid() {
 }
 
 bool Cpu::BRK() {
-    //TODO
+    pc++;
+    bus->write(0x0100 + sp, (pc >> 8) & 0x00FF);
+    sp--;
+    bus->write(0x0100 + sp, pc & 0x00FF);
+    sp--;
+    bus->write(0x0100 + sp, status | U_FLAG | B_FLAG);
+    sp--;
+
+    setStatusFlag(I_FLAG, true);
+
+    nesWord newPcLo = bus->read(0xFFFE);
+    nesWord newPcHi = bus->read(0xFFFF);
+    pc = (newPcHi << 8) | newPcLo;
+
     return false;
 }
 
 bool Cpu::RTI() {
-    //TODO
+    sp++;
+    status = bus->read(0x0100 + sp);
+    status &= ~U_FLAG;
+    status &= ~B_FLAG;
+
+    sp++;
+    nesWord newPcLo = bus->read(0x0100 + sp);
+    sp++;
+    nesWord newPcHi = bus->read(0x0100 + sp);
+    pc = (newPcHi << 8) | newPcLo;
+
     return false;
 }
 

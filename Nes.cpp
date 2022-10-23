@@ -32,6 +32,8 @@ public:
         bus = new Bus();
         bus->ram[0xFFFC] = 0x00;
         bus->ram[0xFFFD] = 0x80;
+        bus->ram[0xFFFE] = 0xE0;
+        bus->ram[0xFFFF] = 0x80;
         loadProgram();
 
         cpu = new Cpu(bus);
@@ -48,6 +50,8 @@ public:
             return false;
         } else if (GetKey(olc::Key::R).bPressed) {
             cpu->reset();
+        } else if (GetKey(olc::Key::I).bPressed) {
+            cpu->irq();
         } else if (GetKey(olc::Key::M).bPressed) {
             if (displayRenderMode == SHOW_MEMORY_RENDER_MODE) {
                 displayRenderMode = SHOW_SCREEN_RENDER_MODE;
@@ -71,12 +75,21 @@ public:
     }
 
     void loadProgram() {
-        std::stringstream ss;
-        ss << "38 78 F8 EA EA EA 18 58 D8 B8";
+        std::stringstream mainCodeBytesStream;
+        mainCodeBytesStream << "A9 F0 00 EA A9 FF";
         nesWord ramOffset = 0x8000;
-        while (!ss.eof()) {
+        while (!mainCodeBytesStream.eof()) {
             std::string programByte;
-            ss >> programByte;
+            mainCodeBytesStream >> programByte;
+            bus->ram[ramOffset++] = (nesByte)std::stoul(programByte, nullptr, 16);
+        }
+
+        std::stringstream irqCodeBytesStream;
+        irqCodeBytesStream << "A9 03 38 E9 01 D0 FB 40";
+        ramOffset = 0x80E0;
+        while (!irqCodeBytesStream.eof()) {
+            std::string programByte;
+            irqCodeBytesStream >> programByte;
             bus->ram[ramOffset++] = (nesByte)std::stoul(programByte, nullptr, 16);
         }
     }
