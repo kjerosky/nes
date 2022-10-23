@@ -83,7 +83,7 @@ private:
     bool absoluteYIndexed();
     bool immediate();
     bool indirect();
-    bool indexedIndirect(); // (preindexed or X-indexed, indirect)
+    bool xIndexedZeropageIndirect(); // (indexed indirect or preindexed or X-indexed, indirect)
     bool indirectIndexed(); // (postindexed or indirect, Y-indexed)
     bool relative();
     bool zeropage();

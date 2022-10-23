@@ -110,14 +110,14 @@ void Cpu::initializeOpcodeTable() {
 
     opcodeTable[0x6C] = {"JMP", 5, &Cpu::indirect, &Cpu::JMP};
 
-    opcodeTable[0x01] = {"ORA", 6, &Cpu::indexedIndirect, &Cpu::ORA};
-    opcodeTable[0x21] = {"AND", 6, &Cpu::indexedIndirect, &Cpu::AND};
-    opcodeTable[0x41] = {"EOR", 6, &Cpu::indexedIndirect, &Cpu::EOR};
-    opcodeTable[0x61] = {"ADC", 6, &Cpu::indexedIndirect, &Cpu::ADC};
-    opcodeTable[0x81] = {"STA", 6, &Cpu::indexedIndirect, &Cpu::STA};
-    opcodeTable[0xA1] = {"LDA", 6, &Cpu::indexedIndirect, &Cpu::LDA};
-    opcodeTable[0xC1] = {"CMP", 6, &Cpu::indexedIndirect, &Cpu::CMP};
-    opcodeTable[0xE1] = {"SBC", 6, &Cpu::indexedIndirect, &Cpu::SBC};
+    opcodeTable[0x01] = {"ORA", 6, &Cpu::xIndexedZeropageIndirect, &Cpu::ORA};
+    opcodeTable[0x21] = {"AND", 6, &Cpu::xIndexedZeropageIndirect, &Cpu::AND};
+    opcodeTable[0x41] = {"EOR", 6, &Cpu::xIndexedZeropageIndirect, &Cpu::EOR};
+    opcodeTable[0x61] = {"ADC", 6, &Cpu::xIndexedZeropageIndirect, &Cpu::ADC};
+    opcodeTable[0x81] = {"STA", 6, &Cpu::xIndexedZeropageIndirect, &Cpu::STA};
+    opcodeTable[0xA1] = {"LDA", 6, &Cpu::xIndexedZeropageIndirect, &Cpu::LDA};
+    opcodeTable[0xC1] = {"CMP", 6, &Cpu::xIndexedZeropageIndirect, &Cpu::CMP};
+    opcodeTable[0xE1] = {"SBC", 6, &Cpu::xIndexedZeropageIndirect, &Cpu::SBC};
 
     opcodeTable[0x11] = {"ORA", 5, &Cpu::indirectIndexed, &Cpu::ORA};
     opcodeTable[0x31] = {"AND", 5, &Cpu::indirectIndexed, &Cpu::AND};
@@ -303,8 +303,15 @@ bool Cpu::indirect() {
     return false;
 }
 
-bool Cpu::indexedIndirect() {
-    //TODO
+bool Cpu::xIndexedZeropageIndirect() {
+    nesWord zeroPageAddress = bus->read(pc++) + x;
+
+    nesWord loPointerAddress = bus->read(zeroPageAddress & 0x00FF);
+    nesWord hiPointerAddress = bus->read((zeroPageAddress + 1) & 0x00FF);
+    absoluteAddress = (hiPointerAddress << 8) | loPointerAddress;
+
+    fetchedByte = bus->read(absoluteAddress);
+
     return false;
 }
 
