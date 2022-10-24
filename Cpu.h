@@ -2,6 +2,7 @@
 #define CPU_H
 
 #include <string>
+#include <map>
 #include <vector>
 #include "Types.h"
 #include "Bus.h"
@@ -22,7 +23,7 @@ typedef struct {
     bool iFlag;
     bool zFlag;
     bool cFlag;
-} CpuDebugInfo;
+} CpuInfo;
 
 typedef struct {
     std::string name;
@@ -43,7 +44,8 @@ public:
     void clockTick();
     bool isCurrentInstructionComplete();
     void drainSingleCycle();
-    CpuDebugInfo getDebugInfo();
+    std::map<nesWord, std::string> disassemble(nesWord lowerAddress, nesWord upperAddress);
+    CpuInfo getInfo();
 
 private:
 

@@ -11,7 +11,7 @@ Bus::~Bus() {
     // do nothing
 }
 
-nesByte Bus::read(nesWord address) {
+nesByte Bus::read(nesWord address, bool onlyRead) {
     if (address >= 0x0000 && address <= 0xFFFF) {
         return ram[address];
     }

@@ -16,8 +16,12 @@ private:
     Bus* bus;
     Cpu* cpu;
 
+    std::map<nesWord, std::string> disassembly;
+    CpuInfo cpuInfo;
+
+
     enum DisplayRenderMode {
-        SHOW_MEMORY_RENDER_MODE,
+        SHOW_DEBUG_MODE,
         SHOW_SCREEN_RENDER_MODE
     };
     DisplayRenderMode displayRenderMode;
@@ -40,7 +44,9 @@ public:
 
         tempDisplay = olc::Sprite(256, 240);
 
-        displayRenderMode = SHOW_MEMORY_RENDER_MODE;
+        disassembly = cpu->disassemble(0x0000, 0xFFFF);
+
+        displayRenderMode = SHOW_DEBUG_MODE;
 
         return true;
     }
@@ -59,10 +65,10 @@ public:
                 cpu->drainSingleCycle();
             }
         } else if (GetKey(olc::Key::M).bPressed) {
-            if (displayRenderMode == SHOW_MEMORY_RENDER_MODE) {
+            if (displayRenderMode == SHOW_DEBUG_MODE) {
                 displayRenderMode = SHOW_SCREEN_RENDER_MODE;
             } else if (displayRenderMode == SHOW_SCREEN_RENDER_MODE) {
-                displayRenderMode = SHOW_MEMORY_RENDER_MODE;
+                displayRenderMode = SHOW_DEBUG_MODE;
             }
         } else if (GetKey(olc::Key::SPACE).bPressed) {
             executeNextInstruction();
@@ -82,7 +88,7 @@ public:
 
     void loadProgram() {
         std::stringstream mainCodeBytesStream;
-        mainCodeBytesStream << "A9 F0 00 EA A9 FF";
+        mainCodeBytesStream << "A2 05 8A 95 10 CA D0 FA A9 FF 85 10 4C 0C 80";
         nesWord ramOffset = 0x8000;
         while (!mainCodeBytesStream.eof()) {
             std::string programByte;
@@ -101,10 +107,13 @@ public:
     }
 
     void renderDisplay() {
+        cpuInfo = cpu->getInfo();
+
         Clear(olc::DARK_BLUE);
         drawCpuData(520, 8);
+        drawCode(520, 72, 25);
 
-        if (displayRenderMode == SHOW_MEMORY_RENDER_MODE) {
+        if (displayRenderMode == SHOW_DEBUG_MODE) {
             drawPageData(8, 8, 0x0000);
             drawPageData(8, 152, 0x0100);
             drawPageData(8, 296, 0x8000);
@@ -126,21 +135,19 @@ public:
     }
 
     void drawCpuData(int x, int y) {
-        CpuDebugInfo cpuDebugInfo = cpu->getDebugInfo();
+        DrawString(x, y, "N", cpuInfo.nFlag ? olc::YELLOW : olc::DARK_GREY);
+        DrawString(x + 16, y, "V", cpuInfo.vFlag ? olc::YELLOW : olc::DARK_GREY);
+        DrawString(x + 32, y, "D", cpuInfo.dFlag ? olc::YELLOW : olc::DARK_GREY);
+        DrawString(x + 48, y, "I", cpuInfo.iFlag ? olc::YELLOW : olc::DARK_GREY);
+        DrawString(x + 64, y, "Z", cpuInfo.zFlag ? olc::YELLOW : olc::DARK_GREY);
+        DrawString(x + 80, y, "C", cpuInfo.cFlag ? olc::YELLOW : olc::DARK_GREY);
 
-        DrawString(x, y, "N", cpuDebugInfo.nFlag ? olc::YELLOW : olc::DARK_GREY);
-        DrawString(x + 16, y, "V", cpuDebugInfo.vFlag ? olc::YELLOW : olc::DARK_GREY);
-        DrawString(x + 32, y, "D", cpuDebugInfo.dFlag ? olc::YELLOW : olc::DARK_GREY);
-        DrawString(x + 48, y, "I", cpuDebugInfo.iFlag ? olc::YELLOW : olc::DARK_GREY);
-        DrawString(x + 64, y, "Z", cpuDebugInfo.zFlag ? olc::YELLOW : olc::DARK_GREY);
-        DrawString(x + 80, y, "C", cpuDebugInfo.cFlag ? olc::YELLOW : olc::DARK_GREY);
-
-        DrawString(x, y + 10, "PC=$" + hex(cpuDebugInfo.pc, 4));
-        DrawString(x, y + 20, "SP=$" + hex(cpuDebugInfo.sp, 2));
-        DrawString(x, y + 30, " A=$" + hex(cpuDebugInfo.a, 2) + " ("
-            + std::to_string(cpuDebugInfo.a) + "/" + std::to_string((char)cpuDebugInfo.a) + ")");
-        DrawString(x, y + 40, " X=$" + hex(cpuDebugInfo.x, 2) + " (" + std::to_string(cpuDebugInfo.x) + ")");
-        DrawString(x, y + 50, " Y=$" + hex(cpuDebugInfo.y, 2) + " (" + std::to_string(cpuDebugInfo.y) + ")");
+        DrawString(x, y + 10, "PC=$" + hex(cpuInfo.pc, 4));
+        DrawString(x, y + 20, "SP=$" + hex(cpuInfo.sp, 2));
+        DrawString(x, y + 30, " A=$" + hex(cpuInfo.a, 2) + " ("
+            + std::to_string(cpuInfo.a) + "/" + std::to_string((char)cpuInfo.a) + ")");
+        DrawString(x, y + 40, " X=$" + hex(cpuInfo.x, 2) + " (" + std::to_string(cpuInfo.x) + ")");
+        DrawString(x, y + 50, " Y=$" + hex(cpuInfo.y, 2) + " (" + std::to_string(cpuInfo.y) + ")");
     }
 
     void drawPageData(int x, int y, nesWord pageStartAddress) {
@@ -151,6 +158,17 @@ public:
                 nesByte currentByte = bus->ram[pageStartAddress + row * 16 + column];
                 DrawString(x + 7 * 8 + column * 3 * 8, y + row * 8, hex(currentByte, 2));
             }
+        }
+    }
+
+    void drawCode(int x, int y, int instructionCount) {
+        auto iterator = disassembly.find(cpuInfo.pc);
+        for (int i = 0; i < instructionCount / 2; i++) {
+            iterator--;
+        }
+
+        for (int row = 0; row < instructionCount; row++, iterator++) {
+            DrawString(x, y + row * 8, (*iterator).second, (*iterator).first == cpuInfo.pc ? olc::GREEN : olc::WHITE);
         }
     }
 };

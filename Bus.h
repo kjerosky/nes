@@ -13,7 +13,7 @@ public:
     Bus();
     ~Bus();
 
-    nesByte read(nesWord address);
+    nesByte read(nesWord address, bool onlyRead = false);
     void write(nesWord address, nesByte value);
 };
 

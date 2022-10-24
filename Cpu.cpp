@@ -1,4 +1,5 @@
 #include "Cpu.h"
+#include "TextUtils.h"
 
 Cpu::Cpu(Bus* bus) {
     this->bus = bus;
@@ -181,22 +182,22 @@ void Cpu::initializeOpcodeTable() {
     opcodeTable[0xB6] = {"LDX", 4, &Cpu::zeropageYIndexed, &Cpu::LDX};
 }
 
-CpuDebugInfo Cpu::getDebugInfo() {
-    CpuDebugInfo debugInfo;
-    debugInfo.a = a;
-    debugInfo.x = x;
-    debugInfo.y = y;
-    debugInfo.sp = sp;
-    debugInfo.status = status;
-    debugInfo.pc = pc;
-    debugInfo.nFlag = status & N_FLAG;
-    debugInfo.vFlag = status & V_FLAG;
-    debugInfo.dFlag = status & D_FLAG;
-    debugInfo.iFlag = status & I_FLAG;
-    debugInfo.zFlag = status & Z_FLAG;
-    debugInfo.cFlag = status & C_FLAG;
+CpuInfo Cpu::getInfo() {
+    CpuInfo cpuInfo;
+    cpuInfo.a = a;
+    cpuInfo.x = x;
+    cpuInfo.y = y;
+    cpuInfo.sp = sp;
+    cpuInfo.status = status;
+    cpuInfo.pc = pc;
+    cpuInfo.nFlag = status & N_FLAG;
+    cpuInfo.vFlag = status & V_FLAG;
+    cpuInfo.dFlag = status & D_FLAG;
+    cpuInfo.iFlag = status & I_FLAG;
+    cpuInfo.zFlag = status & Z_FLAG;
+    cpuInfo.cFlag = status & C_FLAG;
 
-    return debugInfo;
+    return cpuInfo;
 }
 
 void Cpu::reset() {
@@ -904,4 +905,70 @@ bool Cpu::BEQ() {
     }
 
     return false;
+}
+
+std::map<nesWord, std::string> Cpu::disassemble(nesWord lowerAddress, nesWord upperAddress) {
+    std::map<nesWord, std::string> disassembly;
+    unsigned int currentAddress = lowerAddress;
+    while (currentAddress <= upperAddress) {
+        nesWord instructionAddress = currentAddress;
+        nesByte opcodeByte = bus->read(currentAddress++, true);
+        Instruction instruction = opcodeTable[opcodeByte];
+        std::string line = "$" + hex(instructionAddress, 4) + ": " + instruction.name + " ";
+
+        nesWord byte1;
+        nesWord byte2;
+        if (instruction.addressMode == &Cpu::implied) {
+            // Since an RTI after a BRK will return to the second byte after the BRK,
+            // we'll skip the next instruction for disassembly, like the BRK does.
+            if (instruction.execute == &Cpu::BRK) {
+                currentAddress++;
+            }
+        } else if (instruction.addressMode == &Cpu::absolute) {
+            byte1 = bus->read(currentAddress++, true);
+            byte2 = bus->read(currentAddress++, true);
+            line += "$" + hex((byte2 << 8) | byte1, 4);
+        } else if (instruction.addressMode == &Cpu::absoluteXIndexed) {
+            byte1 = bus->read(currentAddress++, true);
+            byte2 = bus->read(currentAddress++, true);
+            line += "$" + hex((byte2 << 8) | byte1, 4) + ",X";
+        } else if (instruction.addressMode == &Cpu::absoluteYIndexed) {
+            byte1 = bus->read(currentAddress++, true);
+            byte2 = bus->read(currentAddress++, true);
+            line += "$" + hex((byte2 << 8) | byte1, 4) + ",Y";
+        } else if (instruction.addressMode == &Cpu::immediate) {
+            byte1 = bus->read(currentAddress++, true);
+            line += "#$" + hex(byte1, 2);
+        } else if (instruction.addressMode == &Cpu::indirect) {
+            byte1 = bus->read(currentAddress++, true);
+            byte2 = bus->read(currentAddress++, true);
+            line += "($" + hex((byte2 << 8) | byte1, 4) + ")";
+        } else if (instruction.addressMode == &Cpu::xIndexedZeropageIndirect) {
+            byte1 = bus->read(currentAddress++, true);
+            line += "($" + hex(byte1, 2) + ",X)";
+        } else if (instruction.addressMode == &Cpu::zeropageIndirectYIndexed) {
+            byte1 = bus->read(currentAddress++, true);
+            line += "($" + hex(byte1, 2) + "),Y";
+        } else if (instruction.addressMode == &Cpu::relative) {
+            byte1 = bus->read(currentAddress++, true);
+            if (byte1 & 0x0080) {
+                byte1 |= 0xFF00;
+            }
+
+            line += "$" + hex(byte1, 2) + "   [$" + hex(currentAddress + byte1, 4) + "]";
+        } else if (instruction.addressMode == &Cpu::zeropage) {
+            byte1 = bus->read(currentAddress++, true);
+            line += "$" + hex(byte1, 2);
+        } else if (instruction.addressMode == &Cpu::zeropageXIndexed) {
+            byte1 = bus->read(currentAddress++, true);
+            line += "$" + hex(byte1, 2) + ",X";
+        } else if (instruction.addressMode == &Cpu::zeropageYIndexed) {
+            byte1 = bus->read(currentAddress++, true);
+            line += "$" + hex(byte1, 2) + ",Y";
+        }
+
+        disassembly[instructionAddress] = line;
+    }
+
+    return disassembly;
 }
