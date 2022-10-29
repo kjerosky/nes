@@ -7,7 +7,6 @@ Cpu::Cpu(Bus* bus) {
     initializeOpcodeTable();
 
     reset();
-    cyclesRemaining = 0;
 }
 
 Cpu::~Cpu() {
@@ -201,8 +200,8 @@ CpuInfo Cpu::getInfo() {
 }
 
 void Cpu::reset() {
-    nesWord newPcLo = bus->read(0xFFFC);
-    nesWord newPcHi = bus->read(0xFFFD);
+    nesWord newPcLo = bus->cpuRead(0xFFFC);
+    nesWord newPcHi = bus->cpuRead(0xFFFD);
     pc = (newPcHi << 8) | newPcLo;
 
     a = 0;
@@ -219,17 +218,17 @@ void Cpu::irq() {
         return;
     }
 
-    bus->write(0x0100 + sp, (pc >> 8) & 0x00FF);
+    bus->cpuWrite(0x0100 + sp, (pc >> 8) & 0x00FF);
     sp--;
-    bus->write(0x0100 + sp, pc & 0x00FF);
+    bus->cpuWrite(0x0100 + sp, pc & 0x00FF);
     sp--;
-    bus->write(0x0100 + sp, status | U_FLAG);
+    bus->cpuWrite(0x0100 + sp, status | U_FLAG);
     sp--;
 
     setStatusFlag(I_FLAG, true);
 
-    nesWord newPcLo = bus->read(0xFFFE);
-    nesWord newPcHi = bus->read(0xFFFF);
+    nesWord newPcLo = bus->cpuRead(0xFFFE);
+    nesWord newPcHi = bus->cpuRead(0xFFFF);
     pc = (newPcHi << 8) | newPcLo;
 
     cyclesRemaining = 7;
@@ -237,7 +236,7 @@ void Cpu::irq() {
 
 void Cpu::clockTick() {
     if (cyclesRemaining <= 0) {
-        nesByte opcodeByte = bus->read(pc++);
+        nesByte opcodeByte = bus->cpuRead(pc++);
 
         opcode = opcodeTable[opcodeByte];
         cyclesRemaining = opcode.cycles;
@@ -283,48 +282,48 @@ bool Cpu::implied() {
 }
 
 bool Cpu::absolute() {
-    nesWord loAddressByte = bus->read(pc++);
-    nesWord hiAddressByte = bus->read(pc++);
+    nesWord loAddressByte = bus->cpuRead(pc++);
+    nesWord hiAddressByte = bus->cpuRead(pc++);
     absoluteAddress = (hiAddressByte << 8) | loAddressByte;
-    fetchedByte = bus->read(absoluteAddress);
+    fetchedByte = bus->cpuRead(absoluteAddress);
     return false;
 }
 
 bool Cpu::absoluteXIndexed() {
-    nesWord loAddressByte = bus->read(pc++);
-    nesWord hiAddressByte = bus->read(pc++);
+    nesWord loAddressByte = bus->cpuRead(pc++);
+    nesWord hiAddressByte = bus->cpuRead(pc++);
     absoluteAddress = ((hiAddressByte << 8) | loAddressByte) + x;
-    fetchedByte = bus->read(absoluteAddress);
+    fetchedByte = bus->cpuRead(absoluteAddress);
 
     return (absoluteAddress & 0xFF00) != (hiAddressByte << 8);
 }
 
 bool Cpu::absoluteYIndexed() {
-    nesWord loAddressByte = bus->read(pc++);
-    nesWord hiAddressByte = bus->read(pc++);
+    nesWord loAddressByte = bus->cpuRead(pc++);
+    nesWord hiAddressByte = bus->cpuRead(pc++);
     absoluteAddress = ((hiAddressByte << 8) | loAddressByte) + y;
-    fetchedByte = bus->read(absoluteAddress);
+    fetchedByte = bus->cpuRead(absoluteAddress);
 
     return (absoluteAddress & 0xFF00) != (hiAddressByte << 8);
 }
 
 bool Cpu::immediate() {
-    fetchedByte = bus->read(pc++);
+    fetchedByte = bus->cpuRead(pc++);
     return false;
 }
 
 bool Cpu::indirect() {
-    nesWord loPointerAddress = bus->read(pc++);
-    nesWord hiPointerAddress = bus->read(pc++);
+    nesWord loPointerAddress = bus->cpuRead(pc++);
+    nesWord hiPointerAddress = bus->cpuRead(pc++);
     nesWord pointerAddress = (hiPointerAddress << 8) | loPointerAddress;
 
-    nesWord newAbsoluteAddressLo = bus->read(pointerAddress);
+    nesWord newAbsoluteAddressLo = bus->cpuRead(pointerAddress);
     nesWord newAbsoluteAddressHi;
     if (loPointerAddress == 0xFF) {
         // simulate indirect jump page boundary bug (https://www.nesdev.org/wiki/Errata#CPU)
-        newAbsoluteAddressHi = bus->read(pointerAddress & 0xFF00);
+        newAbsoluteAddressHi = bus->cpuRead(pointerAddress & 0xFF00);
     } else {
-        newAbsoluteAddressHi = bus->read(pointerAddress + 1);
+        newAbsoluteAddressHi = bus->cpuRead(pointerAddress + 1);
     }
 
     absoluteAddress = (newAbsoluteAddressHi << 8) | newAbsoluteAddressLo;
@@ -333,31 +332,31 @@ bool Cpu::indirect() {
 }
 
 bool Cpu::xIndexedZeropageIndirect() {
-    nesWord zeroPageAddress = bus->read(pc++) + x;
+    nesWord zeroPageAddress = bus->cpuRead(pc++) + x;
 
-    nesWord loPointerAddress = bus->read(zeroPageAddress & 0x00FF);
-    nesWord hiPointerAddress = bus->read((zeroPageAddress + 1) & 0x00FF);
+    nesWord loPointerAddress = bus->cpuRead(zeroPageAddress & 0x00FF);
+    nesWord hiPointerAddress = bus->cpuRead((zeroPageAddress + 1) & 0x00FF);
     absoluteAddress = (hiPointerAddress << 8) | loPointerAddress;
 
-    fetchedByte = bus->read(absoluteAddress);
+    fetchedByte = bus->cpuRead(absoluteAddress);
 
     return false;
 }
 
 bool Cpu::zeropageIndirectYIndexed() {
-    nesWord zeroPageAddress = bus->read(pc++);
+    nesWord zeroPageAddress = bus->cpuRead(pc++);
 
-    nesWord loPointerAddress = bus->read(zeroPageAddress & 0x00FF);
-    nesWord hiPointerAddress = bus->read((zeroPageAddress + 1) & 0x00FF);
+    nesWord loPointerAddress = bus->cpuRead(zeroPageAddress & 0x00FF);
+    nesWord hiPointerAddress = bus->cpuRead((zeroPageAddress + 1) & 0x00FF);
     absoluteAddress = ((hiPointerAddress << 8) | loPointerAddress) + y;
 
-    fetchedByte = bus->read(absoluteAddress);
+    fetchedByte = bus->cpuRead(absoluteAddress);
 
     return (absoluteAddress & 0xFF00) != (hiPointerAddress << 8);
 }
 
 bool Cpu::relative() {
-    relativeAddress = bus->read(pc++);
+    relativeAddress = bus->cpuRead(pc++);
     if (relativeAddress & 0x0080) {
         relativeAddress |= 0xFF00;
     }
@@ -366,22 +365,22 @@ bool Cpu::relative() {
 }
 
 bool Cpu::zeropage() {
-    absoluteAddress = bus->read(pc++);
-    fetchedByte = bus->read(absoluteAddress);
+    absoluteAddress = bus->cpuRead(pc++);
+    fetchedByte = bus->cpuRead(absoluteAddress);
 
     return false;
 }
 
 bool Cpu::zeropageXIndexed() {
-    absoluteAddress = (bus->read(pc++) + x) & 0xFF;
-    fetchedByte = bus->read(absoluteAddress);
+    absoluteAddress = (bus->cpuRead(pc++) + x) & 0xFF;
+    fetchedByte = bus->cpuRead(absoluteAddress);
 
     return false;
 }
 
 bool Cpu::zeropageYIndexed() {
-    absoluteAddress = (bus->read(pc++) + y) & 0xFF;
-    fetchedByte = bus->read(absoluteAddress);
+    absoluteAddress = (bus->cpuRead(pc++) + y) & 0xFF;
+    fetchedByte = bus->cpuRead(absoluteAddress);
 
     return false;
 }
@@ -397,17 +396,17 @@ bool Cpu::invalid() {
 
 bool Cpu::BRK() {
     pc++;
-    bus->write(0x0100 + sp, (pc >> 8) & 0x00FF);
+    bus->cpuWrite(0x0100 + sp, (pc >> 8) & 0x00FF);
     sp--;
-    bus->write(0x0100 + sp, pc & 0x00FF);
+    bus->cpuWrite(0x0100 + sp, pc & 0x00FF);
     sp--;
-    bus->write(0x0100 + sp, status | U_FLAG | B_FLAG);
+    bus->cpuWrite(0x0100 + sp, status | U_FLAG | B_FLAG);
     sp--;
 
     setStatusFlag(I_FLAG, true);
 
-    nesWord newPcLo = bus->read(0xFFFE);
-    nesWord newPcHi = bus->read(0xFFFF);
+    nesWord newPcLo = bus->cpuRead(0xFFFE);
+    nesWord newPcHi = bus->cpuRead(0xFFFF);
     pc = (newPcHi << 8) | newPcLo;
 
     return false;
@@ -415,14 +414,14 @@ bool Cpu::BRK() {
 
 bool Cpu::RTI() {
     sp++;
-    status = bus->read(0x0100 + sp);
+    status = bus->cpuRead(0x0100 + sp);
     status &= ~U_FLAG;
     status &= ~B_FLAG;
 
     sp++;
-    nesWord newPcLo = bus->read(0x0100 + sp);
+    nesWord newPcLo = bus->cpuRead(0x0100 + sp);
     sp++;
-    nesWord newPcHi = bus->read(0x0100 + sp);
+    nesWord newPcHi = bus->cpuRead(0x0100 + sp);
     pc = (newPcHi << 8) | newPcLo;
 
     return false;
@@ -430,9 +429,9 @@ bool Cpu::RTI() {
 
 bool Cpu::RTS() {
     sp++;
-    nesWord newPcLow = bus->read(0x0100 + sp);
+    nesWord newPcLow = bus->cpuRead(0x0100 + sp);
     sp++;
-    nesWord newPcHigh = bus->read(0x0100 + sp);
+    nesWord newPcHigh = bus->cpuRead(0x0100 + sp);
 
     pc = (newPcHigh << 8) | newPcLow;
     pc++;
@@ -441,7 +440,7 @@ bool Cpu::RTS() {
 }
 
 bool Cpu::PHP() {
-    bus->write(0x0100 + sp, status | U_FLAG | B_FLAG);
+    bus->cpuWrite(0x0100 + sp, status | U_FLAG | B_FLAG);
     sp--;
     return false;
 }
@@ -453,7 +452,7 @@ bool Cpu::CLC() {
 
 bool Cpu::PLP() {
     sp++;
-    status = bus->read(0x0100 + sp) & (~U_FLAG) & (~B_FLAG);
+    status = bus->cpuRead(0x0100 + sp) & (~U_FLAG) & (~B_FLAG);
     return false;
 }
 
@@ -463,7 +462,7 @@ bool Cpu::SEC() {
 }
 
 bool Cpu::PHA() {
-    bus->write(0x0100 + sp, a);
+    bus->cpuWrite(0x0100 + sp, a);
     sp--;
     return false;
 }
@@ -475,7 +474,7 @@ bool Cpu::CLI() {
 
 bool Cpu::PLA() {
     sp++;
-    a = bus->read(0x0100 + sp);
+    a = bus->cpuRead(0x0100 + sp);
     setStatusFlag(N_FLAG, a & 0x80);
     setStatusFlag(Z_FLAG, a == 0x00);
     return false;
@@ -579,9 +578,9 @@ bool Cpu::JSR() {
     nesByte savedPcLow = pc & 0x00FF;
     nesByte savedPcHigh = (pc >> 8) & 0x00FF;
 
-    bus->write(0x0100 + sp, savedPcHigh);
+    bus->cpuWrite(0x0100 + sp, savedPcHigh);
     sp--;
-    bus->write(0x0100 + sp, savedPcLow);
+    bus->cpuWrite(0x0100 + sp, savedPcLow);
     sp--;
 
     pc = absoluteAddress;
@@ -603,7 +602,7 @@ bool Cpu::JMP() {
 }
 
 bool Cpu::STY() {
-    bus->write(absoluteAddress, y);
+    bus->cpuWrite(absoluteAddress, y);
     return false;
 }
 
@@ -669,7 +668,7 @@ bool Cpu::ADC() {
 }
 
 bool Cpu::STA() {
-    bus->write(absoluteAddress, a);
+    bus->cpuWrite(absoluteAddress, a);
     return false;
 }
 
@@ -715,7 +714,7 @@ bool Cpu::ASL() {
     if (opcode.addressMode == &Cpu::implied) {
         a = temp;
     } else {
-        bus->write(absoluteAddress, temp);
+        bus->cpuWrite(absoluteAddress, temp);
     }
 
     return false;
@@ -730,7 +729,7 @@ bool Cpu::ROL() {
     if (opcode.addressMode == &Cpu::implied) {
         a = temp;
     } else {
-        bus->write(absoluteAddress, temp);
+        bus->cpuWrite(absoluteAddress, temp);
     }
 
     return false;
@@ -745,7 +744,7 @@ bool Cpu::LSR() {
     if (opcode.addressMode == &Cpu::implied) {
         a = temp;
     } else {
-        bus->write(absoluteAddress, temp);
+        bus->cpuWrite(absoluteAddress, temp);
     }
 
     return false;
@@ -760,14 +759,14 @@ bool Cpu::ROR() {
     if (opcode.addressMode == &Cpu::implied) {
         a = temp;
     } else {
-        bus->write(absoluteAddress, temp);
+        bus->cpuWrite(absoluteAddress, temp);
     }
 
     return false;
 }
 
 bool Cpu::STX() {
-    bus->write(absoluteAddress, x);
+    bus->cpuWrite(absoluteAddress, x);
     return false;
 }
 
@@ -780,7 +779,7 @@ bool Cpu::LDX() {
 
 bool Cpu::DEC() {
     fetchedByte--;
-    bus->write(absoluteAddress, fetchedByte);
+    bus->cpuWrite(absoluteAddress, fetchedByte);
     setStatusFlag(N_FLAG, fetchedByte & 0x80);
     setStatusFlag(Z_FLAG, fetchedByte == 0x00);
     return false;
@@ -788,7 +787,7 @@ bool Cpu::DEC() {
 
 bool Cpu::INC() {
     fetchedByte++;
-    bus->write(absoluteAddress, fetchedByte);
+    bus->cpuWrite(absoluteAddress, fetchedByte);
     setStatusFlag(N_FLAG, fetchedByte & 0x80);
     setStatusFlag(Z_FLAG, fetchedByte == 0x00);
     return false;
@@ -912,7 +911,7 @@ std::map<nesWord, std::string> Cpu::disassemble(nesWord lowerAddress, nesWord up
     unsigned int currentAddress = lowerAddress;
     while (currentAddress <= upperAddress) {
         nesWord instructionAddress = currentAddress;
-        nesByte opcodeByte = bus->read(currentAddress++, true);
+        nesByte opcodeByte = bus->cpuRead(currentAddress++, true);
         Instruction instruction = opcodeTable[opcodeByte];
         std::string line = "$" + hex(instructionAddress, 4) + ": " + instruction.name + " ";
 
@@ -925,45 +924,45 @@ std::map<nesWord, std::string> Cpu::disassemble(nesWord lowerAddress, nesWord up
                 currentAddress++;
             }
         } else if (instruction.addressMode == &Cpu::absolute) {
-            byte1 = bus->read(currentAddress++, true);
-            byte2 = bus->read(currentAddress++, true);
+            byte1 = bus->cpuRead(currentAddress++, true);
+            byte2 = bus->cpuRead(currentAddress++, true);
             line += "$" + hex((byte2 << 8) | byte1, 4);
         } else if (instruction.addressMode == &Cpu::absoluteXIndexed) {
-            byte1 = bus->read(currentAddress++, true);
-            byte2 = bus->read(currentAddress++, true);
+            byte1 = bus->cpuRead(currentAddress++, true);
+            byte2 = bus->cpuRead(currentAddress++, true);
             line += "$" + hex((byte2 << 8) | byte1, 4) + ",X";
         } else if (instruction.addressMode == &Cpu::absoluteYIndexed) {
-            byte1 = bus->read(currentAddress++, true);
-            byte2 = bus->read(currentAddress++, true);
+            byte1 = bus->cpuRead(currentAddress++, true);
+            byte2 = bus->cpuRead(currentAddress++, true);
             line += "$" + hex((byte2 << 8) | byte1, 4) + ",Y";
         } else if (instruction.addressMode == &Cpu::immediate) {
-            byte1 = bus->read(currentAddress++, true);
+            byte1 = bus->cpuRead(currentAddress++, true);
             line += "#$" + hex(byte1, 2);
         } else if (instruction.addressMode == &Cpu::indirect) {
-            byte1 = bus->read(currentAddress++, true);
-            byte2 = bus->read(currentAddress++, true);
+            byte1 = bus->cpuRead(currentAddress++, true);
+            byte2 = bus->cpuRead(currentAddress++, true);
             line += "($" + hex((byte2 << 8) | byte1, 4) + ")";
         } else if (instruction.addressMode == &Cpu::xIndexedZeropageIndirect) {
-            byte1 = bus->read(currentAddress++, true);
+            byte1 = bus->cpuRead(currentAddress++, true);
             line += "($" + hex(byte1, 2) + ",X)";
         } else if (instruction.addressMode == &Cpu::zeropageIndirectYIndexed) {
-            byte1 = bus->read(currentAddress++, true);
+            byte1 = bus->cpuRead(currentAddress++, true);
             line += "($" + hex(byte1, 2) + "),Y";
         } else if (instruction.addressMode == &Cpu::relative) {
-            byte1 = bus->read(currentAddress++, true);
+            byte1 = bus->cpuRead(currentAddress++, true);
             if (byte1 & 0x0080) {
                 byte1 |= 0xFF00;
             }
 
             line += "$" + hex(byte1, 2) + "   [$" + hex(currentAddress + byte1, 4) + "]";
         } else if (instruction.addressMode == &Cpu::zeropage) {
-            byte1 = bus->read(currentAddress++, true);
+            byte1 = bus->cpuRead(currentAddress++, true);
             line += "$" + hex(byte1, 2);
         } else if (instruction.addressMode == &Cpu::zeropageXIndexed) {
-            byte1 = bus->read(currentAddress++, true);
+            byte1 = bus->cpuRead(currentAddress++, true);
             line += "$" + hex(byte1, 2) + ",X";
         } else if (instruction.addressMode == &Cpu::zeropageYIndexed) {
-            byte1 = bus->read(currentAddress++, true);
+            byte1 = bus->cpuRead(currentAddress++, true);
             line += "$" + hex(byte1, 2) + ",Y";
         }
 

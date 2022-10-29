@@ -13,8 +13,8 @@ public:
     Bus();
     ~Bus();
 
-    nesByte read(nesWord address, bool onlyRead = false);
-    void write(nesWord address, nesByte value);
+    nesByte cpuRead(nesWord address, bool onlyRead = false);
+    void cpuWrite(nesWord address, nesByte value);
 };
 
 #endif

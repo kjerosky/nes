@@ -11,7 +11,7 @@ Bus::~Bus() {
     // do nothing
 }
 
-nesByte Bus::read(nesWord address, bool onlyRead) {
+nesByte Bus::cpuRead(nesWord address, bool onlyRead) {
     if (address >= 0x0000 && address <= 0xFFFF) {
         return ram[address];
     }
@@ -19,7 +19,7 @@ nesByte Bus::read(nesWord address, bool onlyRead) {
     return 0;
 }
 
-void Bus::write(nesWord address, nesByte value) {
+void Bus::cpuWrite(nesWord address, nesByte value) {
     if (address >= 0x0000 && address <= 0xFFFF) {
         ram[address] = value;
     }
