@@ -14,6 +14,8 @@ class Nes {
 
 private:
 
+    const float SECONDS_BETWEEN_FRAMES = 1.0f / 60.0f;
+
     Cpu* cpu;
     Ppu* ppu;
     Bus* bus;
@@ -32,6 +34,8 @@ public:
     std::map<nesWord, std::string> disassemble(nesWord lowerAddress, nesWord upperAddress);
     void executeNextInstruction();
     void displayNextFrame();
+    void toggleContinuousExecution();
+    void processTimeElapsed(float secondsElapsed);
     CpuInfo getCpuInfo();
     nesByte* getCpuRam();
 
@@ -41,6 +45,8 @@ public:
 private:
 
     int cycleCounter;
+    bool isContinuouslyExecuting;
+    float secondsUntilNextFrameDraw;
 
     void clockTick();
 };

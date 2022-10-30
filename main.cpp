@@ -55,12 +55,15 @@ public:
             } else if (displayRenderMode == SHOW_ONLY_SCREEN_MODE) {
                 displayRenderMode = SHOW_DEBUG_MODE;
             }
-        } else if (GetKey(olc::Key::SPACE).bPressed) {
+        } else if (GetKey(olc::Key::ENTER).bPressed) {
             nes->executeNextInstruction();
         } else if (GetKey(olc::Key::F).bPressed) {
             nes->displayNextFrame();
+        } else if (GetKey(olc::Key::SPACE).bPressed) {
+            nes->toggleContinuousExecution();
         }
 
+        nes->processTimeElapsed(fElapsedTime);
         renderDisplay();
 
         return true;

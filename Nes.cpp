@@ -26,6 +26,9 @@ Nes::Nes(nesWord mainCodeRamOffset, std::stringstream& mainCodeBytesStream, nesW
     cpu = new Cpu(bus);
 
     cycleCounter = 0;
+    isContinuouslyExecuting = false;
+    secondsUntilNextFrameDraw = 0;
+
     reset();
 }
 
@@ -44,6 +47,10 @@ std::map<nesWord, std::string> Nes::disassemble(nesWord lowerAddress, nesWord up
 }
 
 void Nes::executeNextInstruction() {
+    if (isContinuouslyExecuting) {
+        return;
+    }
+
     // Since the cpu clock runs slower than the system clock, the cpu
     // might report as having already completed its instruction for
     // extra cycles, so we'll drain those out here before attempting
@@ -58,6 +65,10 @@ void Nes::executeNextInstruction() {
 }
 
 void Nes::displayNextFrame() {
+    if (isContinuouslyExecuting) {
+        return;
+    }
+
     do {
         clockTick();
     } while (!ppu->isFrameComplete());
@@ -72,6 +83,33 @@ void Nes::displayNextFrame() {
     }
 
     ppu->acknowledgeFrameWasCompleted();
+}
+
+void Nes::toggleContinuousExecution() {
+    isContinuouslyExecuting = !isContinuouslyExecuting;
+    if (!isContinuouslyExecuting) {
+        while (!cpu->isCurrentInstructionComplete()) {
+            clockTick();
+        }
+    }
+}
+
+void Nes::processTimeElapsed(float secondsElapsed) {
+    if (!isContinuouslyExecuting) {
+        return;
+    }
+
+    if (secondsUntilNextFrameDraw <= 0) {
+        secondsUntilNextFrameDraw += SECONDS_BETWEEN_FRAMES;
+
+        while (!ppu->isFrameComplete()) {
+            clockTick();
+        }
+
+        ppu->acknowledgeFrameWasCompleted();
+    } else {
+        secondsUntilNextFrameDraw -= secondsElapsed;
+    }
 }
 
 CpuInfo Nes::getCpuInfo() {
