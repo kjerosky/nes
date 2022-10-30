@@ -75,9 +75,9 @@ void Nes::displayNextFrame() {
 
     // The cpu might not be done executing the current instruction,
     // so let's clock more cycles until it's complete.
-    // This may end up drawing a few extra pixels in the upper-left
-    // part of the screen, but it's better to have the cpu in a
-    // stable state.
+    // Since the ppu will be on its prerender scanline at this point
+    // (scanline = -1), a few extra clock cycles will not cause extra
+    // pixels to be output to the upper-left part of the screen.
     while (!cpu->isCurrentInstructionComplete()) {
         clockTick();
     }
@@ -100,7 +100,7 @@ void Nes::processTimeElapsed(float secondsElapsed) {
     }
 
     if (secondsUntilNextFrameDraw <= 0) {
-        secondsUntilNextFrameDraw += SECONDS_BETWEEN_FRAMES;
+        secondsUntilNextFrameDraw += SECONDS_BETWEEN_FRAMES - secondsElapsed;
 
         while (!ppu->isFrameComplete()) {
             clockTick();
