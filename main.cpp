@@ -1,9 +1,13 @@
 #define OLC_PGE_APPLICATION
 #include "olcPixelGameEngine.h"
 
+#include <string>
 #include <sstream>
+#include <cstdlib>
+
 #include "TextUtils.h"
 #include "Nes.h"
+#include "Cartridge.h"
 
 const int WINDOW_WIDTH = 768;
 const int WINDOW_HEIGHT = 480;
@@ -13,7 +17,9 @@ class Display : public olc::PixelGameEngine {
 private:
 
     Nes* nes;
+    Cartridge* cartridge;
 
+    std::string filename;
     std::map<nesWord, std::string> disassembly;
     CpuInfo cpuInfo;
 
@@ -26,8 +32,17 @@ private:
 
 public:
 
+    Display(std::string filename) {
+        this->filename = filename;
+    }
+
     bool OnUserCreate() override {
         sAppName = "NES Emulator";
+
+        cartridge = new Cartridge(filename);
+        if (!cartridge->isValid()) {
+            exit(EXIT_FAILURE);
+        }
 
         std::stringstream mainCodeBytesStream;
         mainCodeBytesStream << "A2 05 8A 95 10 CA D0 FA A9 FF 85 10 4C 0C 80";
@@ -71,6 +86,7 @@ public:
 
     bool OnUserDestroy() override {
         delete nes;
+        delete cartridge;
 
         return true;
     }
@@ -138,7 +154,12 @@ public:
 };
 
 int main(int argc, char* argv[]) {
-    Display display;
+    if (argc != 2) {
+        fprintf(stderr, "usage: %s filename\n", argv[0]);
+        exit(EXIT_FAILURE);
+    }
+
+    Display display(argv[1]);
     if (display.Construct(WINDOW_WIDTH, WINDOW_HEIGHT, 1, 1, true)) {
         display.Start();
     }
