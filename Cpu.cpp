@@ -254,12 +254,6 @@ bool Cpu::isCurrentInstructionComplete() {
     return cyclesRemaining <= 0;
 }
 
-void Cpu::drainSingleCycle() {
-    if (cyclesRemaining > 0) {
-        cyclesRemaining--;
-    }
-}
-
 nesByte Cpu::getStatusFlag(nesByte flag) {
     return status & flag ? 1 : 0;
 }

@@ -4,8 +4,10 @@
 #include <sstream>
 #include <map>
 
+#include "olcPixelGameEngine.h"
 #include "Types.h"
 #include "Cpu.h"
+#include "Ppu.h"
 #include "Bus.h"
 
 class Nes {
@@ -13,6 +15,7 @@ class Nes {
 private:
 
     Cpu* cpu;
+    Ppu* ppu;
     Bus* bus;
 
 public:
@@ -25,8 +28,10 @@ public:
     );
     ~Nes();
 
+    olc::Sprite* getScreen();
     std::map<nesWord, std::string> disassemble(nesWord lowerAddress, nesWord upperAddress);
     void executeNextInstruction();
+    void displayNextFrame();
     CpuInfo getCpuInfo();
     nesByte* getCpuRam();
 
@@ -34,6 +39,8 @@ public:
     void irq();
 
 private:
+
+    int cycleCounter;
 
     void clockTick();
 };

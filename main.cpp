@@ -20,11 +20,9 @@ private:
 
     enum DisplayRenderMode {
         SHOW_DEBUG_MODE,
-        SHOW_SCREEN_RENDER_MODE
+        SHOW_ONLY_SCREEN_MODE
     };
     DisplayRenderMode displayRenderMode;
-
-    olc::Sprite tempDisplay;
 
 public:
 
@@ -36,8 +34,6 @@ public:
         std::stringstream irqCodeBytesStream;
         irqCodeBytesStream << "A9 03 38 E9 01 D0 FB 40";
         nes = new Nes(0x8000, mainCodeBytesStream, 0x80E0, irqCodeBytesStream);
-
-        tempDisplay = olc::Sprite(256, 240);
 
         disassembly = nes->disassemble(0x0000, 0xFFFF);
 
@@ -55,12 +51,14 @@ public:
             nes->irq();
         } else if (GetKey(olc::Key::M).bPressed) {
             if (displayRenderMode == SHOW_DEBUG_MODE) {
-                displayRenderMode = SHOW_SCREEN_RENDER_MODE;
-            } else if (displayRenderMode == SHOW_SCREEN_RENDER_MODE) {
+                displayRenderMode = SHOW_ONLY_SCREEN_MODE;
+            } else if (displayRenderMode == SHOW_ONLY_SCREEN_MODE) {
                 displayRenderMode = SHOW_DEBUG_MODE;
             }
         } else if (GetKey(olc::Key::SPACE).bPressed) {
             nes->executeNextInstruction();
+        } else if (GetKey(olc::Key::F).bPressed) {
+            nes->displayNextFrame();
         }
 
         renderDisplay();
@@ -77,22 +75,17 @@ public:
     void renderDisplay() {
         cpuInfo = nes->getCpuInfo();
 
-        Clear(olc::DARK_BLUE);
-        drawCpuData(520, 8);
-        drawCode(520, 72, 25);
-
         if (displayRenderMode == SHOW_DEBUG_MODE) {
-            drawPageData(8, 8, 0x0000);
-            drawPageData(8, 152, 0x0100);
-            drawPageData(8, 296, 0x8000);
-        } else if (displayRenderMode == SHOW_SCREEN_RENDER_MODE) {
-            //TODO fake some noise for now...need to get this from the ppu in the future
-            for (int y = 0; y < 240; y++) {
-                for (int x = 0; x < 256; x++) {
-                    tempDisplay.SetPixel(x, y, rand() % 2 ? olc::BLACK : olc::Pixel(230, 230, 230));
-                }
-            }
-            DrawSprite(0, 0, &tempDisplay, 2);
+            Clear(olc::DARK_BLUE);
+
+            drawCpuData(520, 8);
+            drawCode(520, 72, 25);
+            DrawSprite(0, 0, nes->getScreen(), 2);
+        } else if (displayRenderMode == SHOW_ONLY_SCREEN_MODE) {
+            Clear(olc::BLACK);
+
+            int screenCenteredX = (WINDOW_WIDTH - nes->getScreen()->width * 2) / 2;
+            DrawSprite(screenCenteredX, 0, nes->getScreen(), 2);
         }
     }
 

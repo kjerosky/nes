@@ -3,6 +3,8 @@
 #include <sstream>
 
 Nes::Nes(nesWord mainCodeRamOffset, std::stringstream& mainCodeBytesStream, nesWord irqCodeRamOffset, std::stringstream& irqCodeBytesStream) {
+    ppu = new Ppu();
+
     bus = new Bus();
     bus->ram[0xFFFC] = mainCodeRamOffset & 0x00FF;
     bus->ram[0xFFFD] = (mainCodeRamOffset >> 8) & 0x00FF;
@@ -22,12 +24,19 @@ Nes::Nes(nesWord mainCodeRamOffset, std::stringstream& mainCodeBytesStream, nesW
     }
 
     cpu = new Cpu(bus);
+
+    cycleCounter = 0;
     reset();
 }
 
 Nes::~Nes() {
     delete bus;
+    delete ppu;
     delete cpu;
+}
+
+olc::Sprite* Nes::getScreen() {
+    return ppu->getScreen();
 }
 
 std::map<nesWord, std::string> Nes::disassemble(nesWord lowerAddress, nesWord upperAddress) {
@@ -35,9 +44,34 @@ std::map<nesWord, std::string> Nes::disassemble(nesWord lowerAddress, nesWord up
 }
 
 void Nes::executeNextInstruction() {
+    // Since the cpu clock runs slower than the system clock, the cpu
+    // might report as having already completed its instruction for
+    // extra cycles, so we'll drain those out here before attempting
+    // to execute the next actual instruction.
+    while (cpu->isCurrentInstructionComplete()) {
+        clockTick();
+    }
+
     do {
         clockTick();
     } while (!cpu->isCurrentInstructionComplete());
+}
+
+void Nes::displayNextFrame() {
+    do {
+        clockTick();
+    } while (!ppu->isFrameComplete());
+
+    // The cpu might not be done executing the current instruction,
+    // so let's clock more cycles until it's complete.
+    // This may end up drawing a few extra pixels in the upper-left
+    // part of the screen, but it's better to have the cpu in a
+    // stable state.
+    while (!cpu->isCurrentInstructionComplete()) {
+        clockTick();
+    }
+
+    ppu->acknowledgeFrameWasCompleted();
 }
 
 CpuInfo Nes::getCpuInfo() {
@@ -63,5 +97,12 @@ void Nes::irq() {
 }
 
 void Nes::clockTick() {
-    cpu->clockTick();
+    ppu->clockTick();
+
+    if (cycleCounter % 3 == 0) {
+        cycleCounter = 0;
+        cpu->clockTick();
+    }
+
+    cycleCounter++;
 }

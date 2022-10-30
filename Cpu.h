@@ -43,7 +43,6 @@ public:
     void irq();
     void clockTick();
     bool isCurrentInstructionComplete();
-    void drainSingleCycle();
     std::map<nesWord, std::string> disassemble(nesWord lowerAddress, nesWord upperAddress);
     CpuInfo getInfo();
 
