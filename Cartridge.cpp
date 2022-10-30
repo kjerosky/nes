@@ -2,6 +2,8 @@
 
 #include <fstream>
 
+#include "Mapper000.h"
+
 Cartridge::Cartridge(std::string filename) {
     struct inesHeader {
         char nesIdentifier[4];
@@ -46,6 +48,16 @@ Cartridge::Cartridge(std::string filename) {
 
         inputFileStream.close();
 
+        switch (mapperId) {
+            case 0:
+                mapper = new Mapper000(programRomBankCount, characterRomBankCount);
+                break;
+
+            default:
+                fprintf(stderr, "ERROR: Mapper %u has not been implemented yet!\n", mapperId);
+                return;
+        }
+
         valid = true;
     } else {
         fprintf(stderr, "ERROR: Could not open `%s'!\n", filename.c_str());
@@ -53,9 +65,29 @@ Cartridge::Cartridge(std::string filename) {
 }
 
 Cartridge::~Cartridge() {
-    // do nothing
+    delete mapper;
 }
 
 bool Cartridge::isValid() {
     return valid;
+}
+
+nesByte Cartridge::cpuRead(nesWord address) {
+    nesWord mappedAddress = mapper->mapCpuRead(address);
+    return programRomData[mappedAddress];
+}
+
+void Cartridge::cpuWrite(nesWord address, nesByte data) {
+    nesWord mappedAddress = mapper->mapCpuWrite(address);
+    programRomData[mappedAddress] = data;
+}
+
+nesByte Cartridge::ppuRead(nesWord address) {
+    nesWord mappedAddress = mapper->mapPpuRead(address);
+    return characterRomData[mappedAddress];
+}
+
+void Cartridge::ppuWrite(nesWord address, nesByte data) {
+    nesWord mappedAddress = mapper->mapPpuWrite(address);
+    characterRomData[mappedAddress] = data;
 }

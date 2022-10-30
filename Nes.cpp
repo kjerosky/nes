@@ -2,27 +2,11 @@
 
 #include <sstream>
 
-Nes::Nes(nesWord mainCodeRamOffset, std::stringstream& mainCodeBytesStream, nesWord irqCodeRamOffset, std::stringstream& irqCodeBytesStream) {
-    ppu = new Ppu();
+Nes::Nes(Cartridge* cartridge) {
+    this->cartridge = cartridge;
 
-    bus = new Bus();
-    bus->ram[0xFFFC] = mainCodeRamOffset & 0x00FF;
-    bus->ram[0xFFFD] = (mainCodeRamOffset >> 8) & 0x00FF;
-    bus->ram[0xFFFE] = irqCodeRamOffset & 0x00FF;
-    bus->ram[0xFFFF] = (irqCodeRamOffset >> 8) & 0x00FF;
-
-    while (!mainCodeBytesStream.eof()) {
-        std::string programByte;
-        mainCodeBytesStream >> programByte;
-        bus->ram[mainCodeRamOffset++] = (nesByte)std::stoul(programByte, nullptr, 16);
-    }
-
-    while (!irqCodeBytesStream.eof()) {
-        std::string programByte;
-        irqCodeBytesStream >> programByte;
-        bus->ram[irqCodeRamOffset++] = (nesByte)std::stoul(programByte, nullptr, 16);
-    }
-
+    ppu = new Ppu(cartridge);
+    bus = new Bus(ppu, cartridge);
     cpu = new Cpu(bus);
 
     cycleCounter = 0;

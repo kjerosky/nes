@@ -9,6 +9,7 @@
 #include "Cpu.h"
 #include "Ppu.h"
 #include "Bus.h"
+#include "Cartridge.h"
 
 class Nes {
 
@@ -19,15 +20,11 @@ private:
     Cpu* cpu;
     Ppu* ppu;
     Bus* bus;
+    Cartridge* cartridge;
 
 public:
 
-    Nes(
-        nesWord mainCodeRamOffset,
-        std::stringstream& mainCodeBytesStream,
-        nesWord irqCodeRamOffset,
-        std::stringstream& irqCodeBytesStream
-    );
+    Nes(Cartridge* cartridge);
     ~Nes();
 
     olc::Sprite* getScreen();

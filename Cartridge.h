@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "Types.h"
+#include "Mapper.h"
 
 class Cartridge {
 
@@ -14,6 +15,11 @@ public:
     ~Cartridge();
 
     bool isValid();
+
+    nesByte cpuRead(nesWord address);
+    void cpuWrite(nesWord address, nesByte data);
+    nesByte ppuRead(nesWord address);
+    void ppuWrite(nesWord address, nesByte data);
 
 private:
 
@@ -26,6 +32,7 @@ private:
 
     std::vector<nesByte> programRomData;
     std::vector<nesByte> characterRomData;
+    Mapper* mapper;
 };
 
 #endif

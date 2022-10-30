@@ -44,11 +44,7 @@ public:
             exit(EXIT_FAILURE);
         }
 
-        std::stringstream mainCodeBytesStream;
-        mainCodeBytesStream << "A2 05 8A 95 10 CA D0 FA A9 FF 85 10 4C 0C 80";
-        std::stringstream irqCodeBytesStream;
-        irqCodeBytesStream << "A9 03 38 E9 01 D0 FB 40";
-        nes = new Nes(0x8000, mainCodeBytesStream, 0x80E0, irqCodeBytesStream);
+        nes = new Nes(cartridge);
 
         disassembly = nes->disassemble(0x0000, 0xFFFF);
 

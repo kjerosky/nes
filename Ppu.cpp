@@ -1,6 +1,8 @@
 #include "Ppu.h"
 
-Ppu::Ppu() {
+Ppu::Ppu(Cartridge* cartridge) {
+    this->cartridge = cartridge;
+
     screen = olc::Sprite(256, 240);
 
     initializePalette();
@@ -94,6 +96,15 @@ bool Ppu::isFrameComplete() {
 
 void Ppu::acknowledgeFrameWasCompleted() {
     frameIsComplete = false;
+}
+
+nesWord Ppu::cpuRead(nesWord address, bool onlyRead) {
+    //TODO
+    return 0x00;
+}
+
+void Ppu::cpuWrite(nesWord address, nesByte data) {
+    //TODO
 }
 
 void Ppu::clockTick() {
