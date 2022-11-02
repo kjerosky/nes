@@ -35,6 +35,8 @@ public:
     void processTimeElapsed(float secondsElapsed);
     CpuInfo getCpuInfo();
     nesByte* getCpuRam();
+    olc::Sprite* getPatternTable(int patternTableIndex, int paletteIndex);
+    olc::Pixel* getActivePalettesColors();
 
     void reset();
     void irq();

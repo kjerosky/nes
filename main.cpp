@@ -9,7 +9,7 @@
 #include "Nes.h"
 #include "Cartridge.h"
 
-const int WINDOW_WIDTH = 768;
+const int WINDOW_WIDTH = 780;
 const int WINDOW_HEIGHT = 480;
 
 class Display : public olc::PixelGameEngine {
@@ -30,6 +30,8 @@ private:
     };
     DisplayRenderMode displayRenderMode;
 
+    int selectedPaletteIndex;
+
 public:
 
     Display(std::string filename) {
@@ -49,6 +51,8 @@ public:
         disassembly = nes->disassemble(0x0000, 0xFFFF);
 
         displayRenderMode = SHOW_DEBUG_MODE;
+
+        selectedPaletteIndex = 0;
 
         return true;
     }
@@ -72,6 +76,8 @@ public:
             nes->displayNextFrame();
         } else if (GetKey(olc::Key::SPACE).bPressed) {
             nes->toggleContinuousExecution();
+        } else if (GetKey(olc::Key::P).bPressed) {
+            selectedPaletteIndex = (selectedPaletteIndex + 1) % 8;
         }
 
         nes->processTimeElapsed(fElapsedTime);
@@ -95,6 +101,9 @@ public:
 
             drawCpuData(520, 8);
             drawCode(520, 72, 25);
+            drawPalettes(516, 338);
+            DrawSprite(516, 348, nes->getPatternTable(0, selectedPaletteIndex));
+            DrawSprite(648, 348, nes->getPatternTable(1, selectedPaletteIndex));
             DrawSprite(0, 0, nes->getScreen(), 2);
         } else if (displayRenderMode == SHOW_ONLY_SCREEN_MODE) {
             Clear(olc::BLACK);
@@ -146,6 +155,18 @@ public:
         for (int row = 0; row < instructionCount; row++, iterator++) {
             DrawString(x, y + row * 8, (*iterator).second, (*iterator).first == cpuInfo.pc ? olc::GREEN : olc::WHITE);
         }
+    }
+
+    void drawPalettes(int x, int y) {
+        olc::Pixel* activePalettesColors = nes->getActivePalettesColors();
+        for (int paletteIndex = 0; paletteIndex < 8; paletteIndex++) {
+            for (int colorIndex = 0; colorIndex < 4; colorIndex++) {
+                olc::Pixel color = activePalettesColors[paletteIndex * 4 + colorIndex];
+                FillRect(x + paletteIndex * 32 + colorIndex * 6, y, 6, 6, color);
+            }
+        }
+
+        DrawRect(x + selectedPaletteIndex * 32 - 1, y - 1, 4 * 6 + 1, 7, olc::GREEN);
     }
 };
 

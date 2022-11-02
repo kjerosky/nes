@@ -240,6 +240,7 @@ void Cpu::clockTick() {
 
         opcode = opcodeTable[opcodeByte];
         cyclesRemaining = opcode.cycles;
+        addressMode = opcode.addressMode;
         bool addressModeRequiresAdditionalCycles = (this->*opcode.addressMode)();
         bool operationExecutionRequiresAdditionalCycles = (this->*opcode.execute)();
         if (addressModeRequiresAdditionalCycles && operationExecutionRequiresAdditionalCycles) {
@@ -266,6 +267,12 @@ void Cpu::setStatusFlag(nesByte flag, bool value) {
     }
 }
 
+void Cpu::fetch() {
+    if (addressMode != &Cpu::implied) {
+        fetchedByte = bus->cpuRead(absoluteAddress);
+    }
+}
+
 
 
 // address modes
@@ -279,7 +286,6 @@ bool Cpu::absolute() {
     nesWord loAddressByte = bus->cpuRead(pc++);
     nesWord hiAddressByte = bus->cpuRead(pc++);
     absoluteAddress = (hiAddressByte << 8) | loAddressByte;
-    fetchedByte = bus->cpuRead(absoluteAddress);
     return false;
 }
 
@@ -287,7 +293,6 @@ bool Cpu::absoluteXIndexed() {
     nesWord loAddressByte = bus->cpuRead(pc++);
     nesWord hiAddressByte = bus->cpuRead(pc++);
     absoluteAddress = ((hiAddressByte << 8) | loAddressByte) + x;
-    fetchedByte = bus->cpuRead(absoluteAddress);
 
     return (absoluteAddress & 0xFF00) != (hiAddressByte << 8);
 }
@@ -296,13 +301,12 @@ bool Cpu::absoluteYIndexed() {
     nesWord loAddressByte = bus->cpuRead(pc++);
     nesWord hiAddressByte = bus->cpuRead(pc++);
     absoluteAddress = ((hiAddressByte << 8) | loAddressByte) + y;
-    fetchedByte = bus->cpuRead(absoluteAddress);
 
     return (absoluteAddress & 0xFF00) != (hiAddressByte << 8);
 }
 
 bool Cpu::immediate() {
-    fetchedByte = bus->cpuRead(pc++);
+    absoluteAddress = pc++;
     return false;
 }
 
@@ -332,8 +336,6 @@ bool Cpu::xIndexedZeropageIndirect() {
     nesWord hiPointerAddress = bus->cpuRead((zeroPageAddress + 1) & 0x00FF);
     absoluteAddress = (hiPointerAddress << 8) | loPointerAddress;
 
-    fetchedByte = bus->cpuRead(absoluteAddress);
-
     return false;
 }
 
@@ -343,8 +345,6 @@ bool Cpu::zeropageIndirectYIndexed() {
     nesWord loPointerAddress = bus->cpuRead(zeroPageAddress & 0x00FF);
     nesWord hiPointerAddress = bus->cpuRead((zeroPageAddress + 1) & 0x00FF);
     absoluteAddress = ((hiPointerAddress << 8) | loPointerAddress) + y;
-
-    fetchedByte = bus->cpuRead(absoluteAddress);
 
     return (absoluteAddress & 0xFF00) != (hiPointerAddress << 8);
 }
@@ -360,21 +360,18 @@ bool Cpu::relative() {
 
 bool Cpu::zeropage() {
     absoluteAddress = bus->cpuRead(pc++);
-    fetchedByte = bus->cpuRead(absoluteAddress);
 
     return false;
 }
 
 bool Cpu::zeropageXIndexed() {
     absoluteAddress = (bus->cpuRead(pc++) + x) & 0xFF;
-    fetchedByte = bus->cpuRead(absoluteAddress);
 
     return false;
 }
 
 bool Cpu::zeropageYIndexed() {
     absoluteAddress = (bus->cpuRead(pc++) + y) & 0xFF;
-    fetchedByte = bus->cpuRead(absoluteAddress);
 
     return false;
 }
@@ -583,6 +580,7 @@ bool Cpu::JSR() {
 }
 
 bool Cpu::BIT() {
+    fetch();
     setStatusFlag(N_FLAG, fetchedByte & (1 << 7));
     setStatusFlag(Z_FLAG, (a & fetchedByte) == 0x00);
     setStatusFlag(V_FLAG, fetchedByte & (1 << 6));
@@ -601,6 +599,7 @@ bool Cpu::STY() {
 }
 
 bool Cpu::LDY() {
+    fetch();
     y = fetchedByte;
     setStatusFlag(N_FLAG, y & 0x80);
     setStatusFlag(Z_FLAG, y == 0x00);
@@ -608,6 +607,7 @@ bool Cpu::LDY() {
 }
 
 bool Cpu::CPY() {
+    fetch();
     nesByte temp = y - fetchedByte;
     setStatusFlag(C_FLAG, y >= fetchedByte);
     setStatusFlag(Z_FLAG, temp == 0x00);
@@ -616,6 +616,7 @@ bool Cpu::CPY() {
 }
 
 bool Cpu::CPX() {
+    fetch();
     nesByte temp = x - fetchedByte;
     setStatusFlag(C_FLAG, x >= fetchedByte);
     setStatusFlag(Z_FLAG, temp == 0x00);
@@ -624,6 +625,7 @@ bool Cpu::CPX() {
 }
 
 bool Cpu::ORA() {
+    fetch();
     a |= fetchedByte;
     setStatusFlag(N_FLAG, a & 0x80);
     setStatusFlag(Z_FLAG, a == 0x00);
@@ -631,6 +633,7 @@ bool Cpu::ORA() {
 }
 
 bool Cpu::AND() {
+    fetch();
     a &= fetchedByte;
     setStatusFlag(N_FLAG, a & 0x80);
     setStatusFlag(Z_FLAG, a == 0x00);
@@ -638,6 +641,7 @@ bool Cpu::AND() {
 }
 
 bool Cpu::EOR() {
+    fetch();
     a ^= fetchedByte;
     setStatusFlag(N_FLAG, a & 0x80);
     setStatusFlag(Z_FLAG, a == 0x00);
@@ -645,6 +649,7 @@ bool Cpu::EOR() {
 }
 
 bool Cpu::ADC() {
+    fetch();
     nesWord result = a + fetchedByte + getStatusFlag(C_FLAG);
     nesByte byteResult = result;
     bool signResult = byteResult & 0x80;
@@ -667,6 +672,7 @@ bool Cpu::STA() {
 }
 
 bool Cpu::LDA() {
+    fetch();
     a = fetchedByte;
     setStatusFlag(N_FLAG, a & 0x80);
     setStatusFlag(Z_FLAG, a == 0x00);
@@ -674,6 +680,7 @@ bool Cpu::LDA() {
 }
 
 bool Cpu::CMP() {
+    fetch();
     nesByte temp = a - fetchedByte;
     setStatusFlag(N_FLAG, temp & 0x80);
     setStatusFlag(Z_FLAG, temp == 0x00);
@@ -682,6 +689,7 @@ bool Cpu::CMP() {
 }
 
 bool Cpu::SBC() {
+    fetch();
     nesByte onesComplementFetchedByte = ~fetchedByte;
     nesWord result = a + onesComplementFetchedByte + getStatusFlag(C_FLAG);
     nesByte byteResult = result;
@@ -700,6 +708,7 @@ bool Cpu::SBC() {
 }
 
 bool Cpu::ASL() {
+    fetch();
     nesByte temp = fetchedByte << 1;
     setStatusFlag(N_FLAG, temp & 0x80);
     setStatusFlag(Z_FLAG, temp == 0x00);
@@ -715,6 +724,7 @@ bool Cpu::ASL() {
 }
 
 bool Cpu::ROL() {
+    fetch();
     nesByte temp = (fetchedByte << 1) | getStatusFlag(C_FLAG);
     setStatusFlag(N_FLAG, temp & 0x80);
     setStatusFlag(Z_FLAG, temp == 0x00);
@@ -730,6 +740,7 @@ bool Cpu::ROL() {
 }
 
 bool Cpu::LSR() {
+    fetch();
     nesByte temp = fetchedByte >> 1;
     setStatusFlag(N_FLAG, 0);
     setStatusFlag(Z_FLAG, temp == 0x00);
@@ -745,6 +756,7 @@ bool Cpu::LSR() {
 }
 
 bool Cpu::ROR() {
+    fetch();
     nesByte temp = (getStatusFlag(C_FLAG) << 7) | (fetchedByte >> 1);
     setStatusFlag(N_FLAG, temp & 0x80);
     setStatusFlag(Z_FLAG, temp == 0x00);
@@ -765,6 +777,7 @@ bool Cpu::STX() {
 }
 
 bool Cpu::LDX() {
+    fetch();
     x = fetchedByte;
     setStatusFlag(N_FLAG, x & 0x80);
     setStatusFlag(Z_FLAG, x == 0x00);
@@ -772,6 +785,7 @@ bool Cpu::LDX() {
 }
 
 bool Cpu::DEC() {
+    fetch();
     fetchedByte--;
     bus->cpuWrite(absoluteAddress, fetchedByte);
     setStatusFlag(N_FLAG, fetchedByte & 0x80);
@@ -780,6 +794,7 @@ bool Cpu::DEC() {
 }
 
 bool Cpu::INC() {
+    fetch();
     fetchedByte++;
     bus->cpuWrite(absoluteAddress, fetchedByte);
     setStatusFlag(N_FLAG, fetchedByte & 0x80);

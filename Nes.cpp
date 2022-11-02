@@ -104,6 +104,14 @@ nesByte* Nes::getCpuRam() {
     return bus->ram;
 }
 
+olc::Sprite* Nes::getPatternTable(int patternTableIndex, int paletteIndex) {
+    return ppu->getPatternTable(patternTableIndex, paletteIndex);
+}
+
+olc::Pixel* Nes::getActivePalettesColors() {
+    return ppu->getActivePalettesColors();
+}
+
 void Nes::reset() {
     cpu->reset();
     while (!cpu->isCurrentInstructionComplete()) {
@@ -124,6 +132,11 @@ void Nes::clockTick() {
     if (cycleCounter % 3 == 0) {
         cycleCounter = 0;
         cpu->clockTick();
+    }
+
+    if (ppu->processNmiSignal()) {
+        //TODO ADD THIS FUNCTIONALITY
+        //cpu->nmi();
     }
 
     cycleCounter++;

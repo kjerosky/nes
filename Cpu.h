@@ -76,6 +76,9 @@ private:
     nesWord absoluteAddress;
     nesWord relativeAddress;
 
+    bool (Cpu::*addressMode)(void);
+    void fetch();
+
     std::vector<Instruction> opcodeTable;
     void initializeOpcodeTable();
 
