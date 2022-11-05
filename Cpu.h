@@ -41,6 +41,7 @@ public:
 
     void reset();
     void irq();
+    void nmi();
     void clockTick();
     bool isCurrentInstructionComplete();
     std::map<nesWord, std::string> disassemble(nesWord lowerAddress, nesWord upperAddress);

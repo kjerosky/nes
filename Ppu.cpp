@@ -114,7 +114,7 @@ void Ppu::acknowledgeFrameWasCompleted() {
     frameIsComplete = false;
 }
 
-bool Ppu::processNmiSignal() {
+bool Ppu::checkAndResetNmiSignal() {
     bool nmiRaised = wasNmiSignaled;
     wasNmiSignaled = false;
     return nmiRaised;
@@ -172,7 +172,6 @@ nesByte Ppu::cpuRead(nesWord address, bool onlyRead) {
 
         // PPUSTATUS
         case 0x0002:
-            ppuStatusRegister |= PPUSTATUS_VERTICAL_BLANK_BIT; //TODO REMOVE THIS
             // Only the three most significant bits matter, but stale ppu bus
             // data technically exists in the five least significant bits.
             data = (ppuStatusRegister & 0xE0) | (ppuDataBuffer & 0x1F);

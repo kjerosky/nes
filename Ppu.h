@@ -16,7 +16,7 @@ public:
     void clockTick();
     bool isFrameComplete();
     void acknowledgeFrameWasCompleted();
-    bool processNmiSignal();
+    bool checkAndResetNmiSignal();
 
     nesByte cpuRead(nesWord address, bool onlyRead = false);
     void cpuWrite(nesWord address, nesByte data);

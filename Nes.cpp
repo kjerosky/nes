@@ -134,9 +134,8 @@ void Nes::clockTick() {
         cpu->clockTick();
     }
 
-    if (ppu->processNmiSignal()) {
-        //TODO ADD THIS FUNCTIONALITY
-        //cpu->nmi();
+    if (ppu->checkAndResetNmiSignal()) {
+        cpu->nmi();
     }
 
     cycleCounter++;

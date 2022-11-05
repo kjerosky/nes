@@ -234,6 +234,23 @@ void Cpu::irq() {
     cyclesRemaining = 7;
 }
 
+void Cpu::nmi() {
+    bus->cpuWrite(0x0100 + sp, (pc >> 8) & 0x00FF);
+    sp--;
+    bus->cpuWrite(0x0100 + sp, pc & 0x00FF);
+    sp--;
+    bus->cpuWrite(0x0100 + sp, status | U_FLAG);
+    sp--;
+
+    setStatusFlag(I_FLAG, true);
+
+    nesWord newPcLo = bus->cpuRead(0xFFFA);
+    nesWord newPcHi = bus->cpuRead(0xFFFB);
+    pc = (newPcHi << 8) | newPcLo;
+
+    cyclesRemaining = 8;
+}
+
 void Cpu::clockTick() {
     if (cyclesRemaining <= 0) {
         nesByte opcodeByte = bus->cpuRead(pc++);
