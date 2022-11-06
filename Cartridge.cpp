@@ -27,13 +27,13 @@ Cartridge::Cartridge(std::string filename) {
         unsigned char programRomBankCount = inesHeader.programRomBankCount;
         unsigned char characterRomBankCount = inesHeader.characterRomBankCount;
         unsigned char mapperId = (inesHeader.mapperData1 & 0xF0) | (inesHeader.mapperData0 >> 4);
-        mirroring = (inesHeader.mapperData0 & 0x01) ? VERTICAL : HORIZONTAL;
+        mirroring = (inesHeader.mapperData0 & 0x01) ? Mirroring::VERTICAL : Mirroring::HORIZONTAL;
 
         fprintf(stderr, "Loaded header for `%s':\n", filename.c_str());
         fprintf(stderr, "PRG ROM bank count: %u\n", programRomBankCount);
         fprintf(stderr, "CHR ROM bank count: %u\n", characterRomBankCount);
         fprintf(stderr, "Mapper id: %u\n", mapperId);
-        fprintf(stderr, "Mirroring: %s\n", mirroring == VERTICAL ? "VERTICAL" : "HORIZONTAL");
+        fprintf(stderr, "Mirroring: %s\n", mirroring == Mirroring::VERTICAL ? "VERTICAL" : "HORIZONTAL");
 
         // skip trainer data for now, if it exists
         if (inesHeader.mapperData0 & 0x04) {
@@ -70,6 +70,10 @@ Cartridge::~Cartridge() {
 
 bool Cartridge::isValid() {
     return valid;
+}
+
+enum Cartridge::Mirroring Cartridge::getMirroring() {
+    return mirroring;
 }
 
 nesByte Cartridge::cpuRead(nesWord address) {

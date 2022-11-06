@@ -112,6 +112,10 @@ olc::Pixel* Nes::getActivePalettesColors() {
     return ppu->getActivePalettesColors();
 }
 
+nesByte* Nes::getNameTable(int nameTableIndex) {
+    return ppu->getNameTable(nameTableIndex);
+}
+
 void Nes::reset() {
     cpu->reset();
     while (!cpu->isCurrentInstructionComplete()) {
@@ -121,6 +125,13 @@ void Nes::reset() {
 
 void Nes::irq() {
     cpu->irq();
+    while (!cpu->isCurrentInstructionComplete()) {
+        clockTick();
+    }
+}
+
+void Nes::nmi() {
+    cpu->nmi();
     while (!cpu->isCurrentInstructionComplete()) {
         clockTick();
     }

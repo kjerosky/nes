@@ -21,12 +21,14 @@ public:
     nesByte ppuRead(nesWord address);
     void ppuWrite(nesWord address, nesByte data);
 
-private:
-
-    enum {
+    enum Mirroring {
         HORIZONTAL,
         VERTICAL
     } mirroring;
+
+    Mirroring getMirroring();
+
+private:
 
     bool valid = false;
 

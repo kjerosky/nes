@@ -156,6 +156,10 @@ olc::Pixel* Ppu::getActivePalettesColors() {
     return activePalettesColors;
 }
 
+nesByte* Ppu::getNameTable(int nameTableIndex) {
+    return nameTables[nameTableIndex];
+}
+
 nesByte Ppu::cpuRead(nesWord address, bool onlyRead) {
     nesByte data = 0x00;
 
@@ -273,7 +277,20 @@ nesByte Ppu::readViaPpuBus(nesWord address, bool onlyRead) {
     if (address >= 0x0000 && address <= 0x1FFF) {
         data = cartridge->ppuRead(address);
     } else if (address >= 0x2000 && address <= 0x3EFF) {
-        //TODO
+        address &= 0x0FFF;
+        if (cartridge->getMirroring() == Cartridge::Mirroring::VERTICAL) {
+            if ((address >= 0x0000 && address <= 0x03FF) || (address >= 0x0800 && address <= 0x0BFF)) {
+                data = nameTables[0][address & 0x03FF];
+            } else if ((address >= 0x0400 && address <= 0x07FF) || (address >= 0x0C00 && address <= 0x0FFF)) {
+                data = nameTables[1][address & 0x03FF];
+            }
+        } else if (cartridge->getMirroring() == Cartridge::Mirroring::HORIZONTAL) {
+            if ((address >= 0x0000 && address <= 0x03FF) || (address >= 0x0400 && address <= 0x07FF)) {
+                data = nameTables[0][address & 0x03FF];
+            } else if ((address >= 0x0800 && address <= 0x0BFF) || (address >= 0x0C00 && address <= 0x0FFF)) {
+                data = nameTables[1][address & 0x03FF];
+            }
+        }
     } else if (address >= 0x3F00 && 0x3FFF) {
         address &= 0x001F;
         if (address == 0x0010) {
@@ -297,7 +314,20 @@ void Ppu::writeViaPpuBus(nesWord address, nesByte data) {
     if (address >= 0x0000 && address <= 0x1FFF) {
         cartridge->ppuWrite(address, data);
     } else if (address >= 0x2000 && address <= 0x3EFF) {
-        //TODO
+        address &= 0x0FFF;
+        if (cartridge->getMirroring() == Cartridge::Mirroring::VERTICAL) {
+            if ((address >= 0x0000 && address <= 0x03FF) || (address >= 0x0800 && address <= 0x0BFF)) {
+                nameTables[0][address & 0x03FF] = data;
+            } else if ((address >= 0x0400 && address <= 0x07FF) || (address >= 0x0C00 && address <= 0x0FFF)) {
+                nameTables[1][address & 0x03FF] = data;
+            }
+        } else if (cartridge->getMirroring() == Cartridge::Mirroring::HORIZONTAL) {
+            if ((address >= 0x0000 && address <= 0x03FF) || (address >= 0x0400 && address <= 0x07FF)) {
+                nameTables[0][address & 0x03FF] = data;
+            } else if ((address >= 0x0800 && address <= 0x0BFF) || (address >= 0x0C00 && address <= 0x0FFF)) {
+                nameTables[1][address & 0x03FF] = data;
+            }
+        }
     } else if (address >= 0x3F00 && 0x3FFF) {
         address &= 0x001F;
         if (address == 0x0010) {
@@ -325,9 +355,6 @@ void Ppu::clockTick() {
             wasNmiSignaled = true;
         }
     }
-
-    // TODO REPLACE THIS RANDOM NOISE WITH ACTUAL DISPLAY
-    screen.SetPixel(cycle - 1, scanline, nesMainPalette[rand() % 2 ? 0x30 : 0x3F]);
 
     cycle++;
     if (cycle >= 341) {

@@ -23,6 +23,7 @@ public:
 
     olc::Sprite* getPatternTable(int patternTableIndex, int paletteIndex);
     olc::Pixel* getActivePalettesColors();
+    nesByte* getNameTable(int nameTableIndex);
 
 private:
 
@@ -34,6 +35,8 @@ private:
 
     olc::Sprite screen;
     olc::Sprite patternTables[2];
+
+    nesByte nameTables[2][1024];
 
     int scanline;
     int cycle;

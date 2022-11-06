@@ -64,6 +64,8 @@ public:
             nes->reset();
         } else if (GetKey(olc::Key::I).bPressed) {
             nes->irq();
+        } else if (GetKey(olc::Key::N).bPressed) {
+            nes->nmi();
         } else if (GetKey(olc::Key::M).bPressed) {
             if (displayRenderMode == SHOW_DEBUG_MODE) {
                 displayRenderMode = SHOW_ONLY_SCREEN_MODE;
@@ -96,15 +98,19 @@ public:
     void renderDisplay() {
         cpuInfo = nes->getCpuInfo();
 
+        olc::Sprite* patternTable0 = nes->getPatternTable(0, selectedPaletteIndex);
+        olc::Sprite* patternTable1 = nes->getPatternTable(1, selectedPaletteIndex);
+
         if (displayRenderMode == SHOW_DEBUG_MODE) {
             Clear(olc::DARK_BLUE);
 
             drawCpuData(520, 8);
             drawCode(520, 72, 25);
             drawPalettes(516, 338);
-            DrawSprite(516, 348, nes->getPatternTable(0, selectedPaletteIndex));
-            DrawSprite(648, 348, nes->getPatternTable(1, selectedPaletteIndex));
+            DrawSprite(516, 348, patternTable0);
+            DrawSprite(648, 348, patternTable1);
             DrawSprite(0, 0, nes->getScreen(), 2);
+            drawNameTableTiles(0, 0, patternTable1);
         } else if (displayRenderMode == SHOW_ONLY_SCREEN_MODE) {
             Clear(olc::BLACK);
 
@@ -167,6 +173,40 @@ public:
         }
 
         DrawRect(x + selectedPaletteIndex * 32 - 1, y - 1, 4 * 6 + 1, 7, olc::GREEN);
+    }
+
+    void drawNameTableBytes(int x, int y) {
+        nesByte* nameTable = nes->getNameTable(0);
+        for (int row = 0; row < 32; row++) {
+            for (int column = 0; column < 32; column++) {
+                DrawString(
+                    x + column * 16,
+                    y + row * 16,
+                    hex(nameTable[row * 32 + column], 2),
+                    column % 2 == 0 ? olc::WHITE : olc::GREY,
+                    1
+                );
+            }
+        }
+    }
+
+    void drawNameTableTiles(int x, int y, olc::Sprite* backgroundPatternTable) {
+        nesByte* nameTable = nes->getNameTable(0);
+        for (int row = 0; row < 32; row++) {
+            for (int column = 0; column < 32; column++) {
+                nesByte tileId = nameTable[row * 32 + column];
+                DrawPartialSprite(
+                    x + column * 16,
+                    y + row * 16,
+                    backgroundPatternTable,
+                    (tileId & 0x0F) * 8,
+                    ((tileId >> 4) & 0x0F) * 8,
+                    8,
+                    8,
+                    2
+                );
+            }
+        }
     }
 };
 

@@ -37,9 +37,11 @@ public:
     nesByte* getCpuRam();
     olc::Sprite* getPatternTable(int patternTableIndex, int paletteIndex);
     olc::Pixel* getActivePalettesColors();
+    nesByte* getNameTable(int nameTableIndex);
 
     void reset();
     void irq();
+    void nmi();
 
 private:
 
