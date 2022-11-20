@@ -9,18 +9,7 @@ Ppu::Ppu(Cartridge* cartridge) {
 
     initializePalette();
 
-    scanline = 0;
-    cycle = 0;
-    frameIsComplete = false;
-    wasNmiSignaled = false;
-
-    ppuCtrlRegister = 0x00;
-    ppuMaskRegister = 0x00;
-    ppuStatusRegister = 0x00;
-
-    ppuAddressLatchUseLoByte = false;
-    ppuDataBuffer = 0x00;
-    ppuAddress = 0x0000;
+    reset();
 }
 
 Ppu::~Ppu() {
@@ -120,6 +109,43 @@ bool Ppu::checkAndResetNmiSignal() {
     return nmiRaised;
 }
 
+void Ppu::reset() {
+    scanline = 0;
+    cycle = 0;
+    frameIsComplete = false;
+    wasNmiSignaled = false;
+
+    ppuCtrlRegister = 0x00;
+    ppuMaskRegister = 0x00;
+    ppuStatusRegister = 0x00;
+
+    ppuAddressLatchUseLoByte = false;
+    ppuDataBuffer = 0x00;
+
+    vRamAddress.coarseX = 0x00;
+    vRamAddress.coarseY = 0x00;
+    vRamAddress.nameTableX = 0x00;
+    vRamAddress.nameTableY = 0x00;
+    vRamAddress.fineY = 0x00;
+    tRamAddress.coarseX = 0x00;
+    tRamAddress.coarseY = 0x00;
+    tRamAddress.nameTableX = 0x00;
+    tRamAddress.nameTableY = 0x00;
+    tRamAddress.fineY = 0x00;
+
+    fineX = 0x00;;
+
+    nextNameTableByte = 0x00;
+    nextAttributeByte = 0x00;
+    nextBackgroundLsbByte = 0x00;
+    nextBackgroundMsbByte = 0x00;
+
+    backgroundPatternLsbShiftRegister = 0x0000;
+    backgroundPatternMsbShiftRegister = 0x0000;
+    backgroundAttributeLsbShiftRegister = 0x0000;
+    backgroundAttributeMsbShiftRegister = 0x0000;
+}
+
 olc::Sprite* Ppu::getPatternTable(int patternTableIndex, int paletteIndex) {
     for (nesWord tileRow = 0; tileRow < 16; tileRow++) {
         for (nesWord tileColumn = 0; tileColumn < 16; tileColumn++) {
@@ -158,6 +184,27 @@ olc::Pixel* Ppu::getActivePalettesColors() {
 
 nesByte* Ppu::getNameTable(int nameTableIndex) {
     return nameTables[nameTableIndex];
+}
+
+nesWord Ppu::getCurrentPpuAddress() {
+    return
+        (vRamAddress.fineY << 12) |
+        (vRamAddress.nameTableY << 11) |
+        (vRamAddress.nameTableX << 10) |
+        (vRamAddress.coarseY << 5) |
+        vRamAddress.coarseX
+    ;
+}
+
+void Ppu::incrementCurrentPpuAddress() {
+    nesWord nextPpuAddress = getCurrentPpuAddress() + ((ppuCtrlRegister & PPUCTRL_INCREMENT_MODE_BIT) ? 0x0020 : 0x0001);
+    nextPpuAddress &= 0x7FFF;
+
+    vRamAddress.fineY = (nextPpuAddress >> 12) & 0x07;
+    vRamAddress.nameTableY = (nextPpuAddress >> 11) & 0x01;
+    vRamAddress.nameTableX = (nextPpuAddress >> 10) & 0x01;
+    vRamAddress.coarseY = (nextPpuAddress >> 5) & 0x1F;
+    vRamAddress.coarseX = nextPpuAddress & 0x1F;
 }
 
 nesByte Ppu::cpuRead(nesWord address, bool onlyRead) {
@@ -205,15 +252,16 @@ nesByte Ppu::cpuRead(nesWord address, bool onlyRead) {
 
         // PPUDATA
         case 0x0007:
+            nesWord currentPpuAddress = getCurrentPpuAddress();
             data = ppuDataBuffer;
-            ppuDataBuffer = readViaPpuBus(ppuAddress, onlyRead);
+            ppuDataBuffer = readViaPpuBus(currentPpuAddress, onlyRead);
 
             // Palette data does not have a buffered delay, though it is put in the buffer.
-            if (ppuAddress >= 0x3F00 && ppuAddress <= 0x3FFF) {
+            if (currentPpuAddress >= 0x3F00 && currentPpuAddress <= 0x3FFF) {
                 data = ppuDataBuffer;
             }
 
-            ppuAddress += (ppuCtrlRegister & PPUCTRL_INCREMENT_MODE_BIT) ? 0x0020 : 0x0001;
+            incrementCurrentPpuAddress();
             break;
     }
 
@@ -225,6 +273,8 @@ void Ppu::cpuWrite(nesWord address, nesByte data) {
         // PPUCTRL
         case 0x0000:
             ppuCtrlRegister = data;
+            tRamAddress.nameTableX = (ppuCtrlRegister & PPUCTRL_NAMETABLE_X_BIT) ? 0x01 : 0x00;
+            tRamAddress.nameTableY = (ppuCtrlRegister & PPUCTRL_NAMETABLE_Y_BIT) ? 0x01 : 0x00;
             break;
 
         // PPUMASK
@@ -249,23 +299,35 @@ void Ppu::cpuWrite(nesWord address, nesByte data) {
 
         // PPUSCROLL
         case 0x0005:
-            //TODO
+            if (ppuAddressLatchUseLoByte) {
+                tRamAddress.fineY = data & 0x07;
+                tRamAddress.coarseY = (data >> 3) & 0x1F;
+            } else {
+                tRamAddress.coarseX = (data >> 3) & 0x1F;
+                fineX = data & 0x07;
+            }
+            ppuAddressLatchUseLoByte = !ppuAddressLatchUseLoByte;
             break;
 
         // PPUADDR
         case 0x0006:
             if (ppuAddressLatchUseLoByte) {
-                ppuAddress = (ppuAddress & 0xFF00) | data;
+                tRamAddress.coarseY = (tRamAddress.coarseY & 0x18) | ((data >> 5) & 0x07);
+                tRamAddress.coarseX = data & 0x1F;
+                vRamAddress = tRamAddress;
             } else {
-                ppuAddress = (ppuAddress & 0x00FF) | (data << 8);
+                tRamAddress.fineY = (data >> 4) & 0x03;
+                tRamAddress.nameTableY = (data >> 3) & 0x01;
+                tRamAddress.nameTableX = (data >> 2) & 0x01;
+                tRamAddress.coarseY = (tRamAddress.coarseY & 0x07) | ((data & 0x03) << 3);
             }
             ppuAddressLatchUseLoByte = !ppuAddressLatchUseLoByte;
             break;
 
         // PPUDATA
         case 0x0007:
-            writeViaPpuBus(ppuAddress, data);
-            ppuAddress += (ppuCtrlRegister & PPUCTRL_INCREMENT_MODE_BIT) ? 0x0020 : 0x0001;
+            writeViaPpuBus(getCurrentPpuAddress(), data);
+            incrementCurrentPpuAddress();
             break;
     }
 }

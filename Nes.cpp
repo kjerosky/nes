@@ -117,6 +117,7 @@ nesByte* Nes::getNameTable(int nameTableIndex) {
 }
 
 void Nes::reset() {
+    ppu->reset();
     cpu->reset();
     while (!cpu->isCurrentInstructionComplete()) {
         clockTick();

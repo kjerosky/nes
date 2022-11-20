@@ -17,6 +17,7 @@ public:
     bool isFrameComplete();
     void acknowledgeFrameWasCompleted();
     bool checkAndResetNmiSignal();
+    void reset();
 
     nesByte cpuRead(nesWord address, bool onlyRead = false);
     void cpuWrite(nesWord address, nesByte data);
@@ -70,13 +71,36 @@ private:
 
     bool ppuAddressLatchUseLoByte;
     nesByte ppuDataBuffer;
-    nesWord ppuAddress;
 
     void initializePalette();
     olc::Pixel getPaletteColor(int paletteIndex, int paletteColorIndex);
 
     nesByte readViaPpuBus(nesWord address, bool onlyRead = false);
     void writeViaPpuBus(nesWord address, nesByte data);
+
+    struct loopyRegister {
+        nesByte coarseX : 5;
+        nesByte coarseY : 5;
+        nesByte nameTableX : 1;
+        nesByte nameTableY : 1;
+        nesByte fineY : 3;
+    };
+    struct loopyRegister vRamAddress;
+    struct loopyRegister tRamAddress;
+    nesWord getCurrentPpuAddress();
+    void incrementCurrentPpuAddress();
+
+    nesByte fineX;
+
+    nesByte nextNameTableByte;
+    nesByte nextAttributeByte;
+    nesByte nextBackgroundLsbByte;
+    nesByte nextBackgroundMsbByte;
+
+    nesWord backgroundPatternLsbShiftRegister;
+    nesWord backgroundPatternMsbShiftRegister;
+    nesWord backgroundAttributeLsbShiftRegister;
+    nesWord backgroundAttributeMsbShiftRegister;
 };
 
 #endif

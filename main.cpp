@@ -110,7 +110,6 @@ public:
             DrawSprite(516, 348, patternTable0);
             DrawSprite(648, 348, patternTable1);
             DrawSprite(0, 0, nes->getScreen(), 2);
-            drawNameTableTiles(0, 0, patternTable1);
         } else if (displayRenderMode == SHOW_ONLY_SCREEN_MODE) {
             Clear(olc::BLACK);
 
