@@ -77,21 +77,33 @@ enum Cartridge::Mirroring Cartridge::getMirroring() {
 }
 
 nesByte Cartridge::cpuRead(nesWord address) {
-    nesWord mappedAddress = mapper->mapCpuRead(address);
-    return programRomData[mappedAddress];
+    nesWord mappedAddress;
+    if (mapper->mapCpuRead(address, mappedAddress)) {
+        return programRomData[mappedAddress];
+    }
+
+    return 0x00;
 }
 
 void Cartridge::cpuWrite(nesWord address, nesByte data) {
-    nesWord mappedAddress = mapper->mapCpuWrite(address);
-    programRomData[mappedAddress] = data;
+    nesWord mappedAddress;
+    if (mapper->mapCpuWrite(address, mappedAddress)) {
+        programRomData[mappedAddress] = data;
+    }
 }
 
 nesByte Cartridge::ppuRead(nesWord address) {
-    nesWord mappedAddress = mapper->mapPpuRead(address);
-    return characterRomData[mappedAddress];
+    nesWord mappedAddress;
+    if (mapper->mapPpuRead(address, mappedAddress)) {
+        return characterRomData[mappedAddress];
+    }
+
+    return 0x00;
 }
 
 void Cartridge::ppuWrite(nesWord address, nesByte data) {
-    nesWord mappedAddress = mapper->mapPpuWrite(address);
-    characterRomData[mappedAddress] = data;
+    nesWord mappedAddress;
+    if (mapper->mapPpuWrite(address, mappedAddress)) {
+        characterRomData[mappedAddress] = data;
+    }
 }

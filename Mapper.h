@@ -10,10 +10,10 @@ public:
     Mapper(unsigned char programRomBankCount, unsigned char characterRomBankCount);
     virtual ~Mapper();
 
-    virtual nesWord mapCpuRead(nesWord requestedAddress) = 0;
-    virtual nesWord mapCpuWrite(nesWord requestedAddress) = 0;
-    virtual nesWord mapPpuRead(nesWord requestedAddress) = 0;
-    virtual nesWord mapPpuWrite(nesWord requestedAddress) = 0;
+    virtual bool mapCpuRead(nesWord requestedAddress, nesWord& mappedAddress) = 0;
+    virtual bool mapCpuWrite(nesWord requestedAddress, nesWord& mappedAddress) = 0;
+    virtual bool mapPpuRead(nesWord requestedAddress, nesWord& mappedAddress) = 0;
+    virtual bool mapPpuWrite(nesWord requestedAddress, nesWord& mappedAddress) = 0;
 
 protected:
 

@@ -9,20 +9,22 @@ Mapper000::~Mapper000() {
     // do nothing
 }
 
-nesWord Mapper000::mapCpuRead(nesWord requestedAddress) {
-    return requestedAddress & (programRomBankCount > 1 ? 0x7FFF : 0x3FFF);
+bool Mapper000::mapCpuRead(nesWord requestedAddress, nesWord& mappedAddress) {
+    mappedAddress = requestedAddress & (programRomBankCount > 1 ? 0x7FFF : 0x3FFF);
+    return true;
 }
 
-nesWord Mapper000::mapCpuWrite(nesWord requestedAddress) {
-    return requestedAddress & (programRomBankCount > 1 ? 0x7FFF : 0x3FFF);
+bool Mapper000::mapCpuWrite(nesWord requestedAddress, nesWord& mappedAddress) {
+    mappedAddress = requestedAddress & (programRomBankCount > 1 ? 0x7FFF : 0x3FFF);
+    return true;
 }
 
-nesWord Mapper000::mapPpuRead(nesWord requestedAddress) {
+bool Mapper000::mapPpuRead(nesWord requestedAddress, nesWord& mappedAddress) {
     // no mapping necessary
-    return requestedAddress;
+    mappedAddress = requestedAddress;
+    return true;
 }
 
-nesWord Mapper000::mapPpuWrite(nesWord requestedAddress) {
-    // no mapping necessary
-    return requestedAddress;
+bool Mapper000::mapPpuWrite(nesWord requestedAddress, nesWord& mappedAddress) {
+    return false;
 }

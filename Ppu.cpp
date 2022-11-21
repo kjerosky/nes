@@ -135,10 +135,10 @@ void Ppu::reset() {
 
     fineX = 0x00;;
 
-    nextNameTableByte = 0x00;
-    nextAttributeByte = 0x00;
-    nextBackgroundLsbByte = 0x00;
-    nextBackgroundMsbByte = 0x00;
+    nextBackgroundNameTableByte = 0x00;
+    nextBackgroundAttributeByte = 0x00;
+    nextBackgroundLsbpByte = 0x00;
+    nextBackgroundMsbpByte = 0x00;
 
     backgroundPatternLsbShiftRegister = 0x0000;
     backgroundPatternMsbShiftRegister = 0x0000;
@@ -407,8 +407,96 @@ void Ppu::writeViaPpuBus(nesWord address, nesByte data) {
 }
 
 void Ppu::clockTick() {
-    if (scanline == -1 && cycle == 1) {
-        ppuStatusRegister &= ~PPUSTATUS_VERTICAL_BLANK_BIT;
+    if (scanline >= -1 && scanline <= 239) {
+        if (scanline == -1) {
+            if (cycle == 1) {
+                ppuStatusRegister &= ~PPUSTATUS_VERTICAL_BLANK_BIT;
+            } else if (cycle >= 280 && cycle <= 304) {
+                resetVerticalScroll();
+            }
+        }
+
+        if ((cycle >= 1 && cycle <= 256) || (cycle >= 321 && cycle <= 336)) {
+            updateBackgroundShiftRegisters();
+
+            switch ((cycle - 1) % 8) {
+                case 0:
+                    transferBackgroundBytesToShiftRegisters();
+                    break;
+
+                case 1:
+                    nextBackgroundNameTableByte = readViaPpuBus(0x2000 | (getCurrentPpuAddress() & 0x0FFF));
+                    break;
+
+                case 3:
+                    nextBackgroundAttributeByte = readViaPpuBus(
+                        0x23C0 |
+                        (vRamAddress.nameTableY << 11) |
+                        (vRamAddress.nameTableX << 10) |
+                        ((vRamAddress.coarseY >> 2) << 3) |
+                        (vRamAddress.coarseX >> 2)
+                    );
+
+                    if (vRamAddress.coarseY & 0x02) {
+                        nextBackgroundAttributeByte >>= 4;
+                    }
+
+                    if (vRamAddress.coarseX & 0x02) {
+                        nextBackgroundAttributeByte >>= 2;
+                    }
+
+                    nextBackgroundAttributeByte &= 0x03;
+                    break;
+
+                case 5:
+                    nextBackgroundLsbpByte = readViaPpuBus(
+                        (ppuCtrlRegister & PPUCTRL_PATTERN_BACKGROUND_BIT ? 0x1000 : 0x0000) +
+                        (((nesWord)nextBackgroundNameTableByte) << 4) +
+                        vRamAddress.fineY
+                    );
+                    break;
+
+                case 7:
+                    nextBackgroundMsbpByte = readViaPpuBus(
+                        (ppuCtrlRegister & PPUCTRL_PATTERN_BACKGROUND_BIT ? 0x1000 : 0x0000) +
+                        (((nesWord)nextBackgroundNameTableByte) << 4) +
+                        vRamAddress.fineY + 0x08
+                    );
+
+                    incrementHorizontalScroll();
+                    break;
+            }
+        }
+
+        if (cycle == 256) {
+            incrementVerticalScroll();
+        }
+
+        if (cycle == 257) {
+            resetHorizontalScroll();
+        }
+
+        if (cycle == 338 || cycle == 240) {
+            nextBackgroundNameTableByte = readViaPpuBus(0x2000 | (getCurrentPpuAddress() & 0x0FFF));
+        }
+
+        if (scanline >= 0 && scanline <= 239 && cycle >= 1 && cycle <= 256) {
+            int paletteIndex = 0;
+            int paletteColorIndex = 0;
+
+            bool isRenderingBackground = ppuMaskRegister & PPUMASK_RENDER_BACKGROUND_BIT;
+            if (isRenderingBackground) {
+                nesWord bitMask = 0x8000 >> fineX;
+                paletteIndex =
+                    (backgroundAttributeMsbShiftRegister & bitMask ? 0x02 : 0x00) |
+                    (backgroundAttributeLsbShiftRegister & bitMask ? 0x01 : 0x00);
+                paletteColorIndex =
+                    (backgroundPatternMsbShiftRegister & bitMask ? 0x02 : 0x00) |
+                    (backgroundPatternLsbShiftRegister & bitMask ? 0x01 : 0x00);
+            }
+
+            screen.SetPixel(cycle - 1, scanline, getPaletteColor(paletteIndex, paletteColorIndex));
+        }
     }
 
     if (scanline == 241 && cycle == 1) {
@@ -428,4 +516,83 @@ void Ppu::clockTick() {
             frameIsComplete = true;
         }
     }
+}
+
+void Ppu::incrementHorizontalScroll() {
+    bool isRenderingBackground = ppuMaskRegister & PPUMASK_RENDER_BACKGROUND_BIT;
+    bool isRenderingSprites = ppuMaskRegister & PPUMASK_RENDER_SPRITES_BIT;
+    if (!isRenderingBackground && !isRenderingSprites) {
+        return;
+    }
+
+    if (vRamAddress.coarseX == 31) {
+        vRamAddress.coarseX = 0;
+        vRamAddress.nameTableX = ~vRamAddress.nameTableX;
+    } else {
+        vRamAddress.coarseX++;
+    }
+}
+
+void Ppu::incrementVerticalScroll() {
+    bool isRenderingBackground = ppuMaskRegister & PPUMASK_RENDER_BACKGROUND_BIT;
+    bool isRenderingSprites = ppuMaskRegister & PPUMASK_RENDER_SPRITES_BIT;
+    if (!isRenderingBackground && !isRenderingSprites) {
+        return;
+    }
+
+    if (vRamAddress.fineY == 7) {
+        vRamAddress.fineY = 0;
+        if (vRamAddress.coarseY == 29) {
+            vRamAddress.coarseY = 0;
+            vRamAddress.nameTableY = ~vRamAddress.nameTableY;
+        } else {
+            vRamAddress.coarseY++;
+        }
+    } else {
+        vRamAddress.fineY++;
+    }
+}
+
+void Ppu::resetHorizontalScroll() {
+    bool isRenderingBackground = ppuMaskRegister & PPUMASK_RENDER_BACKGROUND_BIT;
+    bool isRenderingSprites = ppuMaskRegister & PPUMASK_RENDER_SPRITES_BIT;
+    if (!isRenderingBackground && !isRenderingSprites) {
+        return;
+    }
+
+    vRamAddress.coarseX = tRamAddress.coarseX;
+    vRamAddress.nameTableX = tRamAddress.nameTableX;
+}
+
+void Ppu::resetVerticalScroll() {
+    bool isRenderingBackground = ppuMaskRegister & PPUMASK_RENDER_BACKGROUND_BIT;
+    bool isRenderingSprites = ppuMaskRegister & PPUMASK_RENDER_SPRITES_BIT;
+    if (!isRenderingBackground && !isRenderingSprites) {
+        return;
+    }
+
+    vRamAddress.fineY = tRamAddress.fineY;
+    vRamAddress.coarseY = tRamAddress.coarseY;
+    vRamAddress.nameTableY = tRamAddress.nameTableY;
+}
+
+void Ppu::transferBackgroundBytesToShiftRegisters() {
+    backgroundPatternLsbShiftRegister = (backgroundPatternLsbShiftRegister & 0xFF00) | nextBackgroundLsbpByte;
+    backgroundPatternMsbShiftRegister = (backgroundPatternMsbShiftRegister & 0xFF00) | nextBackgroundMsbpByte;
+
+    backgroundAttributeLsbShiftRegister = (backgroundAttributeLsbShiftRegister & 0xFF00) | (nextBackgroundAttributeByte & 0x01 ? 0xFF : 0x00);
+    backgroundAttributeMsbShiftRegister = (backgroundAttributeMsbShiftRegister & 0xFF00) | (nextBackgroundAttributeByte & 0x02 ? 0xFF : 0x00);
+}
+
+void Ppu::updateBackgroundShiftRegisters() {
+    bool isRenderingBackground = ppuMaskRegister & PPUMASK_RENDER_BACKGROUND_BIT;
+    if (!isRenderingBackground) {
+        return;
+    }
+
+    backgroundPatternLsbShiftRegister <<= 1;
+    backgroundPatternMsbShiftRegister <<= 1;
+
+    backgroundAttributeLsbShiftRegister <<= 1;
+    backgroundAttributeMsbShiftRegister <<= 1;
 }

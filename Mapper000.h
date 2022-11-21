@@ -2,6 +2,7 @@
 #define MAPPER000_H
 
 #include "Mapper.h"
+#include "Types.h"
 
 class Mapper000 : public Mapper {
 
@@ -10,10 +11,10 @@ public:
     Mapper000(unsigned char programRomBankCount, unsigned char characterRomBankCount);
     ~Mapper000();
 
-    nesWord mapCpuRead(nesWord requestedAddress) override;
-    nesWord mapCpuWrite(nesWord requestedAddress) override;
-    nesWord mapPpuRead(nesWord requestedAddress) override;
-    nesWord mapPpuWrite(nesWord requestedAddress) override;
+    bool mapCpuRead(nesWord requestedAddress, nesWord& mappedAddress) override;
+    bool mapCpuWrite(nesWord requestedAddress, nesWord& mappedAddress) override;
+    bool mapPpuRead(nesWord requestedAddress, nesWord& mappedAddress) override;
+    bool mapPpuWrite(nesWord requestedAddress, nesWord& mappedAddress) override;
 };
 
 #endif

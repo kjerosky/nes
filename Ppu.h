@@ -92,15 +92,22 @@ private:
 
     nesByte fineX;
 
-    nesByte nextNameTableByte;
-    nesByte nextAttributeByte;
-    nesByte nextBackgroundLsbByte;
-    nesByte nextBackgroundMsbByte;
+    nesByte nextBackgroundNameTableByte;
+    nesByte nextBackgroundAttributeByte;
+    nesByte nextBackgroundLsbpByte;
+    nesByte nextBackgroundMsbpByte;
 
     nesWord backgroundPatternLsbShiftRegister;
     nesWord backgroundPatternMsbShiftRegister;
     nesWord backgroundAttributeLsbShiftRegister;
     nesWord backgroundAttributeMsbShiftRegister;
+
+    void incrementHorizontalScroll();
+    void incrementVerticalScroll();
+    void resetHorizontalScroll();
+    void resetVerticalScroll();
+    void transferBackgroundBytesToShiftRegisters();
+    void updateBackgroundShiftRegisters();
 };
 
 #endif
