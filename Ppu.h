@@ -133,17 +133,36 @@ private:
     nesByte readViaPpuBus(nesWord address, bool onlyRead = false);
     void writeViaPpuBus(nesWord address, nesByte data);
 
-    struct loopyRegister {
+    class {
+    public:
         nesByte coarseX : 5;
         nesByte coarseY : 5;
         nesByte nameTableX : 1;
         nesByte nameTableY : 1;
         nesByte fineY : 3;
-    };
-    struct loopyRegister vRamAddress;
-    struct loopyRegister tRamAddress;
-    nesWord getCurrentPpuAddress();
-    void incrementCurrentPpuAddress();
+
+        void setData(nesWord data) {
+            coarseX = (data >> 0) & 0x1F;
+            coarseY = (data >> 5) & 0x1F;
+            nameTableX = (data >> 10) & 0x01;
+            nameTableY = (data >> 11) & 0x01;
+            fineY = (data >> 12) & 0x07;
+        }
+
+        nesWord getAsWord() {
+            return
+                (fineY << 12) |
+                (nameTableY << 11) |
+                (nameTableX << 10) |
+                (coarseY << 5) |
+                coarseX
+            ;
+        }
+
+        void increment(nesWord amount) {
+            setData((getAsWord() + amount) & 0x7FFF);
+        }
+    } vRamAddress, tRamAddress;
 
     nesByte fineX;
 

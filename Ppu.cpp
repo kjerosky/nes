@@ -122,16 +122,8 @@ void Ppu::reset() {
     ppuAddressLatchUseLoByte = false;
     ppuDataBuffer = 0x00;
 
-    vRamAddress.coarseX = 0x00;
-    vRamAddress.coarseY = 0x00;
-    vRamAddress.nameTableX = 0x00;
-    vRamAddress.nameTableY = 0x00;
-    vRamAddress.fineY = 0x00;
-    tRamAddress.coarseX = 0x00;
-    tRamAddress.coarseY = 0x00;
-    tRamAddress.nameTableX = 0x00;
-    tRamAddress.nameTableY = 0x00;
-    tRamAddress.fineY = 0x00;
+    vRamAddress.setData(0x0000);
+    tRamAddress.setData(0x0000);
 
     fineX = 0x00;;
 
@@ -186,27 +178,6 @@ nesByte* Ppu::getNameTable(int nameTableIndex) {
     return nameTables[nameTableIndex];
 }
 
-nesWord Ppu::getCurrentPpuAddress() {
-    return
-        (vRamAddress.fineY << 12) |
-        (vRamAddress.nameTableY << 11) |
-        (vRamAddress.nameTableX << 10) |
-        (vRamAddress.coarseY << 5) |
-        vRamAddress.coarseX
-    ;
-}
-
-void Ppu::incrementCurrentPpuAddress() {
-    nesWord nextPpuAddress = getCurrentPpuAddress() + (ppuCtrlRegister.incrementMode ? 0x0020 : 0x0001);
-    nextPpuAddress &= 0x7FFF;
-
-    vRamAddress.fineY = (nextPpuAddress >> 12) & 0x07;
-    vRamAddress.nameTableY = (nextPpuAddress >> 11) & 0x01;
-    vRamAddress.nameTableX = (nextPpuAddress >> 10) & 0x01;
-    vRamAddress.coarseY = (nextPpuAddress >> 5) & 0x1F;
-    vRamAddress.coarseX = nextPpuAddress & 0x1F;
-}
-
 nesByte Ppu::cpuRead(nesWord address, bool onlyRead) {
     nesByte data = 0x00;
 
@@ -252,7 +223,7 @@ nesByte Ppu::cpuRead(nesWord address, bool onlyRead) {
 
         // PPUDATA
         case 0x0007:
-            nesWord currentPpuAddress = getCurrentPpuAddress();
+            nesWord currentPpuAddress = vRamAddress.getAsWord();
             data = ppuDataBuffer;
             ppuDataBuffer = readViaPpuBus(currentPpuAddress, onlyRead);
 
@@ -261,7 +232,7 @@ nesByte Ppu::cpuRead(nesWord address, bool onlyRead) {
                 data = ppuDataBuffer;
             }
 
-            incrementCurrentPpuAddress();
+            vRamAddress.increment(ppuCtrlRegister.incrementMode ? 0x0020 : 0x0001);
             break;
     }
 
@@ -314,7 +285,7 @@ void Ppu::cpuWrite(nesWord address, nesByte data) {
             if (ppuAddressLatchUseLoByte) {
                 tRamAddress.coarseY = (tRamAddress.coarseY & 0x18) | ((data >> 5) & 0x07);
                 tRamAddress.coarseX = data & 0x1F;
-                vRamAddress = tRamAddress;
+                vRamAddress.setData(tRamAddress.getAsWord());
             } else {
                 tRamAddress.fineY = (data >> 4) & 0x03;
                 tRamAddress.nameTableY = (data >> 3) & 0x01;
@@ -326,8 +297,8 @@ void Ppu::cpuWrite(nesWord address, nesByte data) {
 
         // PPUDATA
         case 0x0007:
-            writeViaPpuBus(getCurrentPpuAddress(), data);
-            incrementCurrentPpuAddress();
+            writeViaPpuBus(vRamAddress.getAsWord(), data);
+            vRamAddress.increment(ppuCtrlRegister.incrementMode ? 0x0020 : 0x0001);
             break;
     }
 }
@@ -425,7 +396,7 @@ void Ppu::clockTick() {
                     break;
 
                 case 1:
-                    nextBackgroundNameTableByte = readViaPpuBus(0x2000 | (getCurrentPpuAddress() & 0x0FFF));
+                    nextBackgroundNameTableByte = readViaPpuBus(0x2000 | (vRamAddress.getAsWord() & 0x0FFF));
                     break;
 
                 case 3:
@@ -477,7 +448,7 @@ void Ppu::clockTick() {
         }
 
         if (cycle == 338 || cycle == 240) {
-            nextBackgroundNameTableByte = readViaPpuBus(0x2000 | (getCurrentPpuAddress() & 0x0FFF));
+            nextBackgroundNameTableByte = readViaPpuBus(0x2000 | (vRamAddress.getAsWord() & 0x0FFF));
         }
 
         if (scanline >= 0 && scanline <= 239 && cycle >= 1 && cycle <= 256) {
