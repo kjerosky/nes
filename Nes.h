@@ -43,6 +43,8 @@ public:
     void irq();
     void nmi();
 
+    void updateControllerStates(nesByte controller1State, nesByte controller2State);
+
 private:
 
     int cycleCounter;

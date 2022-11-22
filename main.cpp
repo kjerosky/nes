@@ -58,6 +58,8 @@ public:
     }
 
     bool OnUserUpdate(float fElapsedTime) override {
+        updateControllerStates();
+
         if (GetKey(olc::Key::ESCAPE).bPressed) {
             return false;
         } else if (GetKey(olc::Key::R).bPressed) {
@@ -93,6 +95,23 @@ public:
         delete cartridge;
 
         return true;
+    }
+
+    void updateControllerStates() {
+        nesByte controller1State = 0x00;
+        controller1State |= (GetKey(olc::Key::K).bHeld ? 0x01 : 0x00);
+        controller1State |= (GetKey(olc::Key::J).bHeld ? 0x02 : 0x00);
+        controller1State |= (GetKey(olc::Key::L).bHeld ? 0x04 : 0x00);
+        controller1State |= (GetKey(olc::Key::O).bHeld ? 0x08 : 0x00);
+        controller1State |= (GetKey(olc::Key::W).bHeld ? 0x10 : 0x00);
+        controller1State |= (GetKey(olc::Key::S).bHeld ? 0x20 : 0x00);
+        controller1State |= (GetKey(olc::Key::A).bHeld ? 0x40 : 0x00);
+        controller1State |= (GetKey(olc::Key::D).bHeld ? 0x80 : 0x00);
+
+        // controller 2 is unimplemented for now
+        nesByte controller2State = 0x00;
+
+        nes->updateControllerStates(controller1State, controller2State);
     }
 
     void renderDisplay() {

@@ -152,3 +152,7 @@ void Nes::clockTick() {
 
     cycleCounter++;
 }
+
+void Nes::updateControllerStates(nesByte controller1State, nesByte controller2State) {
+    bus->updateControllerStates(controller1State, controller2State);
+}

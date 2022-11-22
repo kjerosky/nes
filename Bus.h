@@ -18,10 +18,15 @@ public:
     nesByte cpuRead(nesWord address, bool onlyRead = false);
     void cpuWrite(nesWord address, nesByte value);
 
+    void updateControllerStates(nesByte controller1State, nesByte controller2State);
+
 private:
 
     Ppu* ppu;
     Cartridge* cartridge;
+
+    nesByte controllerStates[2];
+    nesByte latchedControllerStates[2];
 };
 
 #endif
