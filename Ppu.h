@@ -44,30 +44,85 @@ private:
     bool frameIsComplete;
     bool wasNmiSignaled;
 
-    static const nesByte PPUCTRL_ENABLE_NMI_BIT = 1 << 7;
-    static const nesByte PPUCTRL_SLAVE_MODE_BIT = 1 << 6;
-    static const nesByte PPUCTRL_SPRITE_SIZE_BIT = 1 << 5;
-    static const nesByte PPUCTRL_PATTERN_BACKGROUND_BIT = 1 << 4;
-    static const nesByte PPUCTRL_PATTERN_SPRITE_BIT = 1 << 3;
-    static const nesByte PPUCTRL_INCREMENT_MODE_BIT = 1 << 2;
-    static const nesByte PPUCTRL_NAMETABLE_Y_BIT = 1 << 1;
-    static const nesByte PPUCTRL_NAMETABLE_X_BIT = 1 << 0;
-    nesByte ppuCtrlRegister;
+    class {
+    public:
+        nesByte nameTableX : 1;
+        nesByte nameTableY : 1;
+        nesByte incrementMode : 1;
+        nesByte patternSprite : 1;
+        nesByte patternBackground : 1;
+        nesByte spriteSize : 1;
+        nesByte slaveMode : 1;
+        nesByte nmiEnabled : 1;
 
-    static const nesByte PPUMASK_EMPHASIZE_BLUE_BIT = 1 << 7;
-    static const nesByte PPUMASK_EMPHASIZE_GREEN_BIT = 1 << 6;
-    static const nesByte PPUMASK_EMPHASIZE_RED_BIT = 1 << 5;
-    static const nesByte PPUMASK_RENDER_SPRITES_BIT = 1 << 4;
-    static const nesByte PPUMASK_RENDER_BACKGROUND_BIT = 1 << 3;
-    static const nesByte PPUMASK_RENDER_SPRITES_LEFT_BIT = 1 << 2;
-    static const nesByte PPUMASK_RENDER_BACKGROUND_LEFT_BIT = 1 << 1;
-    static const nesByte PPUMASK_GREYSCALE_BIT = 1 << 0;
-    nesByte ppuMaskRegister;
+        void setData(nesByte data) {
+            nameTableX = (data >> 0) & 0x01;
+            nameTableY = (data >> 1) & 0x01;
+            incrementMode = (data >> 2) & 0x01;
+            patternSprite = (data >> 3) & 0x01;
+            patternBackground = (data >> 4) & 0x01;
+            spriteSize = (data >> 5) & 0x01;
+            slaveMode = (data >> 6) & 0x01;
+            nmiEnabled = (data >> 7) & 0x01;
+        }
 
-    static const nesByte PPUSTATUS_VERTICAL_BLANK_BIT = 1 << 7;
-    static const nesByte PPUSTATUS_SPRITE_ZERO_HIT_BIT = 1 << 6;
-    static const nesByte PPUSTATUS_SPRITE_OVERFLOW_BIT = 1 << 5;
-    nesByte ppuStatusRegister;
+        nesByte getAsByte() {
+            return
+                (nameTableX << 0) |
+                (nameTableY << 1) |
+                (incrementMode << 2) |
+                (patternSprite << 3) |
+                (patternBackground << 4) |
+                (spriteSize << 5) |
+                (slaveMode << 6) |
+                (nmiEnabled << 7)
+            ;
+        }
+    } ppuCtrlRegister;
+
+    class {
+    public:
+        nesByte greyscale : 1;
+        nesByte renderBackgroundLeft : 1;
+        nesByte renderSpritesLeft : 1;
+        nesByte renderBackground : 1;
+        nesByte renderSprites : 1;
+        nesByte emphasizeRed : 1;
+        nesByte emphasizeGreen : 1;
+        nesByte emphasizeBlue : 1;
+
+        void setData(nesByte data) {
+            greyscale = (data >> 0) & 0x01;
+            renderBackgroundLeft = (data >> 1) & 0x01;
+            renderSpritesLeft = (data >> 2) & 0x01;
+            renderBackground = (data >> 3) & 0x01;
+            renderSprites = (data >> 4) & 0x01;
+            emphasizeRed = (data >> 5) & 0x01;
+            emphasizeGreen = (data >> 6) & 0x01;
+            emphasizeBlue = (data >> 7) & 0x01;
+        }
+    } ppuMaskRegister;
+
+    class {
+    public:
+        nesByte verticalBlank : 1;
+        nesByte spriteZeroHit : 1;
+        nesByte spriteOverflow : 1;
+
+        void setData(nesByte data) {
+            verticalBlank = (data >> 7) & 0x01;
+            spriteZeroHit = (data >> 6) & 0x01;
+            spriteOverflow = (data >> 5) & 0x01;
+        }
+
+        nesByte getAsByte() {
+            return
+                (verticalBlank << 7) |
+                (spriteZeroHit << 6) |
+                (spriteOverflow << 5)
+            ;
+        }
+    } ppuStatusRegister;
 
     bool ppuAddressLatchUseLoByte;
     nesByte ppuDataBuffer;

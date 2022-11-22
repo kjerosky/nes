@@ -115,9 +115,9 @@ void Ppu::reset() {
     frameIsComplete = false;
     wasNmiSignaled = false;
 
-    ppuCtrlRegister = 0x00;
-    ppuMaskRegister = 0x00;
-    ppuStatusRegister = 0x00;
+    ppuCtrlRegister.setData(0x00);
+    ppuMaskRegister.setData(0x00);
+    ppuStatusRegister.setData(0x00);
 
     ppuAddressLatchUseLoByte = false;
     ppuDataBuffer = 0x00;
@@ -197,7 +197,7 @@ nesWord Ppu::getCurrentPpuAddress() {
 }
 
 void Ppu::incrementCurrentPpuAddress() {
-    nesWord nextPpuAddress = getCurrentPpuAddress() + ((ppuCtrlRegister & PPUCTRL_INCREMENT_MODE_BIT) ? 0x0020 : 0x0001);
+    nesWord nextPpuAddress = getCurrentPpuAddress() + (ppuCtrlRegister.incrementMode ? 0x0020 : 0x0001);
     nextPpuAddress &= 0x7FFF;
 
     vRamAddress.fineY = (nextPpuAddress >> 12) & 0x07;
@@ -225,8 +225,8 @@ nesByte Ppu::cpuRead(nesWord address, bool onlyRead) {
         case 0x0002:
             // Only the three most significant bits matter, but stale ppu bus
             // data technically exists in the five least significant bits.
-            data = (ppuStatusRegister & 0xE0) | (ppuDataBuffer & 0x1F);
-            ppuStatusRegister &= ~PPUSTATUS_VERTICAL_BLANK_BIT;
+            data = ppuStatusRegister.getAsByte() | (ppuDataBuffer & 0x1F);
+            ppuStatusRegister.verticalBlank = 0;
             ppuAddressLatchUseLoByte = false;
             break;
 
@@ -272,14 +272,14 @@ void Ppu::cpuWrite(nesWord address, nesByte data) {
     switch (address) {
         // PPUCTRL
         case 0x0000:
-            ppuCtrlRegister = data;
-            tRamAddress.nameTableX = (ppuCtrlRegister & PPUCTRL_NAMETABLE_X_BIT) ? 0x01 : 0x00;
-            tRamAddress.nameTableY = (ppuCtrlRegister & PPUCTRL_NAMETABLE_Y_BIT) ? 0x01 : 0x00;
+            ppuCtrlRegister.setData(data);
+            tRamAddress.nameTableX = (ppuCtrlRegister.nameTableX) ? 0x01 : 0x00;
+            tRamAddress.nameTableY = (ppuCtrlRegister.nameTableY) ? 0x01 : 0x00;
             break;
 
         // PPUMASK
         case 0x0001:
-            ppuMaskRegister = data;
+            ppuMaskRegister.setData(data);
             break;
 
         // PPUSTATUS
@@ -410,7 +410,7 @@ void Ppu::clockTick() {
     if (scanline >= -1 && scanline <= 239) {
         if (scanline == -1) {
             if (cycle == 1) {
-                ppuStatusRegister &= ~PPUSTATUS_VERTICAL_BLANK_BIT;
+                ppuStatusRegister.verticalBlank = 0;
             } else if (cycle >= 280 && cycle <= 304) {
                 resetVerticalScroll();
             }
@@ -450,7 +450,7 @@ void Ppu::clockTick() {
 
                 case 5:
                     nextBackgroundLsbpByte = readViaPpuBus(
-                        (ppuCtrlRegister & PPUCTRL_PATTERN_BACKGROUND_BIT ? 0x1000 : 0x0000) +
+                        (ppuCtrlRegister.patternBackground ? 0x1000 : 0x0000) +
                         (((nesWord)nextBackgroundNameTableByte) << 4) +
                         vRamAddress.fineY
                     );
@@ -458,7 +458,7 @@ void Ppu::clockTick() {
 
                 case 7:
                     nextBackgroundMsbpByte = readViaPpuBus(
-                        (ppuCtrlRegister & PPUCTRL_PATTERN_BACKGROUND_BIT ? 0x1000 : 0x0000) +
+                        (ppuCtrlRegister.patternBackground ? 0x1000 : 0x0000) +
                         (((nesWord)nextBackgroundNameTableByte) << 4) +
                         vRamAddress.fineY + 0x08
                     );
@@ -484,8 +484,7 @@ void Ppu::clockTick() {
             int paletteIndex = 0;
             int paletteColorIndex = 0;
 
-            bool isRenderingBackground = ppuMaskRegister & PPUMASK_RENDER_BACKGROUND_BIT;
-            if (isRenderingBackground) {
+            if (ppuMaskRegister.renderBackground) {
                 nesWord bitMask = 0x8000 >> fineX;
                 paletteIndex =
                     (backgroundAttributeMsbShiftRegister & bitMask ? 0x02 : 0x00) |
@@ -500,8 +499,8 @@ void Ppu::clockTick() {
     }
 
     if (scanline == 241 && cycle == 1) {
-        ppuStatusRegister |= PPUSTATUS_VERTICAL_BLANK_BIT;
-        if (ppuCtrlRegister & PPUCTRL_ENABLE_NMI_BIT) {
+        ppuStatusRegister.verticalBlank = 1;
+        if (ppuCtrlRegister.nmiEnabled) {
             wasNmiSignaled = true;
         }
     }
@@ -519,9 +518,7 @@ void Ppu::clockTick() {
 }
 
 void Ppu::incrementHorizontalScroll() {
-    bool isRenderingBackground = ppuMaskRegister & PPUMASK_RENDER_BACKGROUND_BIT;
-    bool isRenderingSprites = ppuMaskRegister & PPUMASK_RENDER_SPRITES_BIT;
-    if (!isRenderingBackground && !isRenderingSprites) {
+    if (!ppuMaskRegister.renderBackground && !ppuMaskRegister.renderSprites) {
         return;
     }
 
@@ -534,9 +531,7 @@ void Ppu::incrementHorizontalScroll() {
 }
 
 void Ppu::incrementVerticalScroll() {
-    bool isRenderingBackground = ppuMaskRegister & PPUMASK_RENDER_BACKGROUND_BIT;
-    bool isRenderingSprites = ppuMaskRegister & PPUMASK_RENDER_SPRITES_BIT;
-    if (!isRenderingBackground && !isRenderingSprites) {
+    if (!ppuMaskRegister.renderBackground && !ppuMaskRegister.renderSprites) {
         return;
     }
 
@@ -554,9 +549,7 @@ void Ppu::incrementVerticalScroll() {
 }
 
 void Ppu::resetHorizontalScroll() {
-    bool isRenderingBackground = ppuMaskRegister & PPUMASK_RENDER_BACKGROUND_BIT;
-    bool isRenderingSprites = ppuMaskRegister & PPUMASK_RENDER_SPRITES_BIT;
-    if (!isRenderingBackground && !isRenderingSprites) {
+    if (!ppuMaskRegister.renderBackground && !ppuMaskRegister.renderSprites) {
         return;
     }
 
@@ -565,9 +558,7 @@ void Ppu::resetHorizontalScroll() {
 }
 
 void Ppu::resetVerticalScroll() {
-    bool isRenderingBackground = ppuMaskRegister & PPUMASK_RENDER_BACKGROUND_BIT;
-    bool isRenderingSprites = ppuMaskRegister & PPUMASK_RENDER_SPRITES_BIT;
-    if (!isRenderingBackground && !isRenderingSprites) {
+    if (!ppuMaskRegister.renderBackground && !ppuMaskRegister.renderSprites) {
         return;
     }
 
@@ -585,8 +576,7 @@ void Ppu::transferBackgroundBytesToShiftRegisters() {
 }
 
 void Ppu::updateBackgroundShiftRegisters() {
-    bool isRenderingBackground = ppuMaskRegister & PPUMASK_RENDER_BACKGROUND_BIT;
-    if (!isRenderingBackground) {
+    if (!ppuMaskRegister.renderBackground) {
         return;
     }
 
