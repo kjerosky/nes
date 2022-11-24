@@ -36,6 +36,11 @@ void Bus::cpuWrite(nesWord address, nesByte value) {
         ram[address] = value;
     } else if (address >= 0x2000 && address <= 0x3FFF) {
         return ppu->cpuWrite(address & 0x0007, value);
+    } else if (address == 0x4014) {
+        dmaPage = value;
+        dmaAddress = 0x00;
+        dmaReadyToWriteData = false;
+        dmaInProgress = true;
     } else if (address >= 0x4016 && address <= 0x4017) {
         // NOTE: There are more accurate ways to do this, but it works for now! :)
         int controllerId = address & 0x0001;
@@ -48,4 +53,23 @@ void Bus::cpuWrite(nesWord address, nesByte value) {
 void Bus::updateControllerStates(nesByte controller1State, nesByte controller2State) {
     controllerStates[0] = controller1State;
     controllerStates[1] = controller2State;
+}
+
+bool Bus::checkDmaProgress() {
+    if (!dmaInProgress) {
+        return false;
+    }
+
+    if (dmaReadyToWriteData) {
+        ppu->writeToOam(dmaAddress++, dmaData);
+
+        if (dmaAddress == 0x00) {
+            dmaInProgress = false;
+        }
+    } else {
+        dmaData = cpuRead((dmaPage << 8) | dmaAddress);
+    }
+
+    dmaReadyToWriteData = !dmaReadyToWriteData;
+    return true;
 }

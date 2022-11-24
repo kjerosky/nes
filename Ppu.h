@@ -26,6 +26,8 @@ public:
     olc::Pixel* getActivePalettesColors();
     nesByte* getNameTable(int nameTableIndex);
 
+    void writeToOam(nesByte address, nesByte data);
+    nesByte* getOamBytes();
 private:
 
     Cartridge* cartridge;
@@ -182,6 +184,15 @@ private:
     void resetVerticalScroll();
     void transferBackgroundBytesToShiftRegisters();
     void updateBackgroundShiftRegisters();
+
+    struct {
+        nesByte y;
+        nesByte patternId;
+        nesByte attributes;
+        nesByte x;
+    } oam[64];
+    nesByte* oamBytes = (nesByte*)oam;
+    nesByte oamAddress;
 };
 
 #endif

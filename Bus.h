@@ -20,6 +20,8 @@ public:
 
     void updateControllerStates(nesByte controller1State, nesByte controller2State);
 
+    bool checkDmaProgress();
+
 private:
 
     Ppu* ppu;
@@ -27,6 +29,12 @@ private:
 
     nesByte controllerStates[2];
     nesByte latchedControllerStates[2];
+
+    nesByte dmaPage;
+    nesByte dmaAddress;
+    nesByte dmaData;
+    bool dmaInProgress;
+    bool dmaReadyToWriteData;
 };
 
 #endif

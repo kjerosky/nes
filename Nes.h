@@ -45,6 +45,8 @@ public:
 
     void updateControllerStates(nesByte controller1State, nesByte controller2State);
 
+    nesByte* getOamBytes();
+
 private:
 
     int cycleCounter;

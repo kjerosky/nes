@@ -25,8 +25,9 @@ private:
 
 
     enum DisplayRenderMode {
-        SHOW_DEBUG_MODE,
-        SHOW_ONLY_SCREEN_MODE
+        SPRITES_INFO_MODE,
+        CODE_MODE,
+        GAME_MODE
     };
     DisplayRenderMode displayRenderMode;
 
@@ -50,7 +51,7 @@ public:
 
         disassembly = nes->disassemble(0x0000, 0xFFFF);
 
-        displayRenderMode = SHOW_DEBUG_MODE;
+        displayRenderMode = SPRITES_INFO_MODE;
 
         selectedPaletteIndex = 0;
 
@@ -69,10 +70,12 @@ public:
         } else if (GetKey(olc::Key::N).bPressed) {
             nes->nmi();
         } else if (GetKey(olc::Key::M).bPressed) {
-            if (displayRenderMode == SHOW_DEBUG_MODE) {
-                displayRenderMode = SHOW_ONLY_SCREEN_MODE;
-            } else if (displayRenderMode == SHOW_ONLY_SCREEN_MODE) {
-                displayRenderMode = SHOW_DEBUG_MODE;
+            if (displayRenderMode == SPRITES_INFO_MODE) {
+                displayRenderMode = CODE_MODE;
+            } else if (displayRenderMode == CODE_MODE) {
+                displayRenderMode = GAME_MODE;
+            } else if (displayRenderMode == GAME_MODE) {
+                displayRenderMode = SPRITES_INFO_MODE;
             }
         } else if (GetKey(olc::Key::ENTER).bPressed) {
             nes->executeNextInstruction();
@@ -120,7 +123,15 @@ public:
         olc::Sprite* patternTable0 = nes->getPatternTable(0, selectedPaletteIndex);
         olc::Sprite* patternTable1 = nes->getPatternTable(1, selectedPaletteIndex);
 
-        if (displayRenderMode == SHOW_DEBUG_MODE) {
+        if (displayRenderMode == SPRITES_INFO_MODE) {
+            Clear(olc::DARK_BLUE);
+
+            drawPalettes(516, 338);
+            DrawSprite(516, 348, patternTable0);
+            DrawSprite(648, 348, patternTable1);
+            DrawSprite(0, 0, nes->getScreen(), 2);
+            drawSpritesInfo(520, 8, 40);
+        } else if (displayRenderMode == CODE_MODE) {
             Clear(olc::DARK_BLUE);
 
             drawCpuData(520, 8);
@@ -129,7 +140,7 @@ public:
             DrawSprite(516, 348, patternTable0);
             DrawSprite(648, 348, patternTable1);
             DrawSprite(0, 0, nes->getScreen(), 2);
-        } else if (displayRenderMode == SHOW_ONLY_SCREEN_MODE) {
+        } else if (displayRenderMode == GAME_MODE) {
             Clear(olc::BLACK);
 
             int screenCenteredX = (WINDOW_WIDTH - nes->getScreen()->width * 2) / 2;
@@ -224,6 +235,27 @@ public:
                     2
                 );
             }
+        }
+    }
+
+    void drawSpritesInfo(int x, int y, int rowCount) {
+        nesByte* oamBytes = nes->getOamBytes();
+        for (int row = 0; row < 64; row++) {
+            int spriteX = oamBytes[3];
+            int spriteY = oamBytes[0];
+
+            if (row < rowCount) {
+                DrawString(x, y + row * 8,
+                    hex(row, 2)
+                    + ": (" + std::to_string(spriteX) + ", " + std::to_string(spriteY)
+                    + ") ID:" + hex(oamBytes[1], 2)
+                    + " AT:" + hex(oamBytes[2], 2)
+                );
+            }
+
+            DrawRect(spriteX * 2, spriteY * 2, 16, 16);
+
+            oamBytes += 4;
         }
     }
 };

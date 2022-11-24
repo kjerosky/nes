@@ -136,6 +136,8 @@ void Ppu::reset() {
     backgroundPatternMsbShiftRegister = 0x0000;
     backgroundAttributeLsbShiftRegister = 0x0000;
     backgroundAttributeMsbShiftRegister = 0x0000;
+
+    oamAddress = 0x00;
 }
 
 olc::Sprite* Ppu::getPatternTable(int patternTableIndex, int paletteIndex) {
@@ -208,7 +210,7 @@ nesByte Ppu::cpuRead(nesWord address, bool onlyRead) {
 
         // OAMDATA
         case 0x0004:
-            //TODO
+            data = oamBytes[oamAddress];
             break;
 
         // PPUSCROLL
@@ -260,12 +262,12 @@ void Ppu::cpuWrite(nesWord address, nesByte data) {
 
         // OAMADDR
         case 0x0003:
-            //TODO
+            oamAddress = data;
             break;
 
         // OAMDATA
         case 0x0004:
-            //TODO
+            oamBytes[oamAddress++] = data;
             break;
 
         // PPUSCROLL
@@ -556,4 +558,12 @@ void Ppu::updateBackgroundShiftRegisters() {
 
     backgroundAttributeLsbShiftRegister <<= 1;
     backgroundAttributeMsbShiftRegister <<= 1;
+}
+
+void Ppu::writeToOam(nesByte address, nesByte data) {
+    oamBytes[address] = data;
+}
+
+nesByte* Ppu::getOamBytes() {
+    return oamBytes;
 }

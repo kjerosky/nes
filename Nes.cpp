@@ -143,7 +143,10 @@ void Nes::clockTick() {
 
     if (cycleCounter % 3 == 0) {
         cycleCounter = 0;
-        cpu->clockTick();
+
+        if (!bus->checkDmaProgress()) {
+            cpu->clockTick();
+        }
     }
 
     if (ppu->checkAndResetNmiSignal()) {
@@ -155,4 +158,8 @@ void Nes::clockTick() {
 
 void Nes::updateControllerStates(nesByte controller1State, nesByte controller2State) {
     bus->updateControllerStates(controller1State, controller2State);
+}
+
+nesByte* Nes::getOamBytes() {
+    return ppu->getOamBytes();
 }
