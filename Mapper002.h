@@ -1,20 +1,26 @@
-#ifndef MAPPER000_H
-#define MAPPER000_H
+#ifndef MAPPER002_H
+#define MAPPER002_H
 
 #include "Mapper.h"
-#include "Types.h"
 
-class Mapper000 : public Mapper {
+class Mapper002 : public Mapper {
 
 public:
 
-    Mapper000(unsigned char programRomBankCount, unsigned char characterRomBankCount);
-    ~Mapper000();
+    Mapper002(unsigned char programRomBankCount, unsigned char characterRomBankCount);
+    ~Mapper002();
+
+    void reset() override;
 
     bool mapCpuRead(nesWord requestedAddress, unsigned int& mappedAddress) override;
     bool mapCpuWrite(nesWord requestedAddress, unsigned int& mappedAddress, nesByte data) override;
     bool mapPpuRead(nesWord requestedAddress, unsigned int& mappedAddress) override;
     bool mapPpuWrite(nesWord requestedAddress, unsigned int& mappedAddress) override;
+
+private:
+
+    int switchableBankIndex;
+    int fixedBankIndex;
 };
 
 #endif

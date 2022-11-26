@@ -20,7 +20,6 @@ private:
     Cartridge* cartridge;
 
     std::string filename;
-    std::map<nesWord, std::string> disassembly;
     CpuInfo cpuInfo;
 
 
@@ -48,8 +47,6 @@ public:
         }
 
         nes = new Nes(cartridge);
-
-        disassembly = nes->disassemble(0x0000, 0xFFFF);
 
         displayRenderMode = SPRITES_INFO_MODE;
 
@@ -135,7 +132,6 @@ public:
             Clear(olc::DARK_BLUE);
 
             drawCpuData(520, 8);
-            drawCode(520, 72, 25);
             drawPalettes(516, 338);
             DrawSprite(516, 348, patternTable0);
             DrawSprite(648, 348, patternTable1);
@@ -173,22 +169,6 @@ public:
                 nesByte currentByte = cpuRam[pageStartAddress + row * 16 + column];
                 DrawString(x + 7 * 8 + column * 3 * 8, y + row * 8, hex(currentByte, 2));
             }
-        }
-    }
-
-    void drawCode(int x, int y, int instructionCount) {
-        auto iterator = disassembly.find(cpuInfo.pc);
-        if (iterator == disassembly.end()) {
-            DrawString(x, y, "ERROR: NO DISASSEMBLY FOR $" + hex(cpuInfo.pc, 4), olc::RED);
-            return;
-        }
-
-        for (int i = 0; i < instructionCount / 2; i++) {
-            iterator--;
-        }
-
-        for (int row = 0; row < instructionCount; row++, iterator++) {
-            DrawString(x, y + row * 8, (*iterator).second, (*iterator).first == cpuInfo.pc ? olc::GREEN : olc::WHITE);
         }
     }
 

@@ -12,10 +12,10 @@ public:
 
     virtual void reset();
 
-    virtual bool mapCpuRead(nesWord requestedAddress, nesWord& mappedAddress) = 0;
-    virtual bool mapCpuWrite(nesWord requestedAddress, nesWord& mappedAddress) = 0;
-    virtual bool mapPpuRead(nesWord requestedAddress, nesWord& mappedAddress) = 0;
-    virtual bool mapPpuWrite(nesWord requestedAddress, nesWord& mappedAddress) = 0;
+    virtual bool mapCpuRead(nesWord requestedAddress, unsigned int& mappedAddress) = 0;
+    virtual bool mapCpuWrite(nesWord requestedAddress, unsigned int& mappedAddress, nesByte data) = 0;
+    virtual bool mapPpuRead(nesWord requestedAddress, unsigned int& mappedAddress) = 0;
+    virtual bool mapPpuWrite(nesWord requestedAddress, unsigned int& mappedAddress) = 0;
 
 protected:
 

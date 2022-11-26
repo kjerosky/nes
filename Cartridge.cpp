@@ -3,6 +3,7 @@
 #include <fstream>
 
 #include "Mapper000.h"
+#include "Mapper002.h"
 
 Cartridge::Cartridge(std::string filename) {
     struct inesHeader {
@@ -58,6 +59,10 @@ Cartridge::Cartridge(std::string filename) {
                 mapper = new Mapper000(programRomBankCount, characterRomBankCount);
                 break;
 
+            case 2:
+                mapper = new Mapper002(programRomBankCount, characterRomBankCount);
+                break;
+
             default:
                 fprintf(stderr, "ERROR: Mapper %u has not been implemented yet!\n", mapperId);
                 return;
@@ -88,7 +93,7 @@ void Cartridge::reset() {
 }
 
 nesByte Cartridge::cpuRead(nesWord address) {
-    nesWord mappedAddress;
+    unsigned int mappedAddress;
     if (mapper->mapCpuRead(address, mappedAddress)) {
         return programRomData[mappedAddress];
     }
@@ -97,14 +102,14 @@ nesByte Cartridge::cpuRead(nesWord address) {
 }
 
 void Cartridge::cpuWrite(nesWord address, nesByte data) {
-    nesWord mappedAddress;
-    if (mapper->mapCpuWrite(address, mappedAddress)) {
+    unsigned int mappedAddress;
+    if (mapper->mapCpuWrite(address, mappedAddress, data)) {
         programRomData[mappedAddress] = data;
     }
 }
 
 nesByte Cartridge::ppuRead(nesWord address) {
-    nesWord mappedAddress;
+    unsigned int mappedAddress;
     if (mapper->mapPpuRead(address, mappedAddress)) {
         return characterRomData[mappedAddress];
     }
@@ -113,7 +118,7 @@ nesByte Cartridge::ppuRead(nesWord address) {
 }
 
 void Cartridge::ppuWrite(nesWord address, nesByte data) {
-    nesWord mappedAddress;
+    unsigned int mappedAddress;
     if (mapper->mapPpuWrite(address, mappedAddress)) {
         characterRomData[mappedAddress] = data;
     }
