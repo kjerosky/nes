@@ -183,16 +183,28 @@ private:
     void resetHorizontalScroll();
     void resetVerticalScroll();
     void transferBackgroundBytesToShiftRegisters();
-    void updateBackgroundShiftRegisters();
+    void updateShiftRegisters();
 
-    struct {
+    struct spriteEntry {
         nesByte y;
         nesByte patternId;
         nesByte attributes;
         nesByte x;
-    } oam[64];
+    };
+    spriteEntry oam[64];
+    spriteEntry secondaryOam[8];
     nesByte* oamBytes = (nesByte*)oam;
+    nesByte* secondaryOamBytes = (nesByte*)secondaryOam;
     nesByte oamAddress;
+    nesByte spriteLsbShiftRegisters[8];
+    nesByte spriteMsbShiftRegisters[8];
+    bool spriteZeroHitIsPossible;
+    bool spriteZeroIsBeingRendered;
+
+    void performSecondaryOamClearing();
+    void performSpriteEvaluation();
+    void performDataFetchesForSpritesToRenderNext();
+    void loadSpriteShiftRegisters();
 };
 
 #endif

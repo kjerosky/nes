@@ -138,6 +138,8 @@ void Ppu::reset() {
     backgroundAttributeMsbShiftRegister = 0x0000;
 
     oamAddress = 0x00;
+    spriteZeroHitIsPossible = false;
+    spriteZeroIsBeingRendered = false;
 }
 
 olc::Sprite* Ppu::getPatternTable(int patternTableIndex, int paletteIndex) {
@@ -210,7 +212,12 @@ nesByte Ppu::cpuRead(nesWord address, bool onlyRead) {
 
         // OAMDATA
         case 0x0004:
-            data = oamBytes[oamAddress];
+            // while the seconary oam is being cleared, attempting to read $2004 will return $FF
+            if (cycle >= 1 && cycle <= 64) {
+                data = 0xFF;
+            } else {
+                data = oamBytes[oamAddress];
+            }
             break;
 
         // PPUSCROLL
@@ -384,13 +391,17 @@ void Ppu::clockTick() {
         if (scanline == -1) {
             if (cycle == 1) {
                 ppuStatusRegister.verticalBlank = 0;
+                ppuStatusRegister.spriteOverflow = 0;
+                ppuStatusRegister.spriteZeroHit = 0;
             } else if (cycle >= 280 && cycle <= 304) {
                 resetVerticalScroll();
             }
         }
 
+        // === BACKGROUND ===
+
         if ((cycle >= 1 && cycle <= 256) || (cycle >= 321 && cycle <= 336)) {
-            updateBackgroundShiftRegisters();
+            updateShiftRegisters();
 
             switch ((cycle - 1) % 8) {
                 case 0:
@@ -453,18 +464,78 @@ void Ppu::clockTick() {
             nextBackgroundNameTableByte = readViaPpuBus(0x2000 | (vRamAddress.getAsWord() & 0x0FFF));
         }
 
-        if (scanline >= 0 && scanline <= 239 && cycle >= 1 && cycle <= 256) {
-            int paletteIndex = 0;
-            int paletteColorIndex = 0;
+        // === FOREGROUND ===
 
+        // NOTE: We're going to just perform all the secondary oam clearing, sprite evaluation
+        // logic, and data fetches on the last cycle to simplify things. In the future, we
+        // should perform sprite evaluation and data fetches on a cycle-by-cycle basis to make
+        // it more accurate.
+        if (cycle == 256) {
+            performSpriteEvaluation();
+        } else if (cycle == 340) {
+            loadSpriteShiftRegisters();
+        }
+
+        if (scanline >= 0 && scanline <= 239 && cycle >= 1 && cycle <= 256) {
+            int backgroundPaletteIndex = 0;
+            int backgroundPaletteColorIndex = 0;
             if (ppuMaskRegister.renderBackground) {
                 nesWord bitMask = 0x8000 >> fineX;
-                paletteIndex =
+                backgroundPaletteIndex =
                     (backgroundAttributeMsbShiftRegister & bitMask ? 0x02 : 0x00) |
                     (backgroundAttributeLsbShiftRegister & bitMask ? 0x01 : 0x00);
-                paletteColorIndex =
+                backgroundPaletteColorIndex =
                     (backgroundPatternMsbShiftRegister & bitMask ? 0x02 : 0x00) |
                     (backgroundPatternLsbShiftRegister & bitMask ? 0x01 : 0x00);
+            }
+
+            spriteZeroIsBeingRendered = false;
+            int spritePaletteIndex = 0;
+            int spritePaletteColorIndex = 0;
+            bool spriteHasRenderingPriority;
+            if (ppuMaskRegister.renderSprites) {
+                for (int spriteIndex = 0; spriteIndex < 8; spriteIndex++) {
+                    struct spriteEntry* sprite = &secondaryOam[spriteIndex];
+                    if (sprite->x == 0) {
+                        spritePaletteIndex = (sprite->attributes & 0x03) + 4;
+                        spritePaletteColorIndex =
+                            (spriteMsbShiftRegisters[spriteIndex] & 0x80 ? 0x02 : 0x00) |
+                            (spriteLsbShiftRegisters[spriteIndex] & 0x80 ? 0x01 : 0x00);
+
+                        spriteHasRenderingPriority = (sprite->attributes & 0x20) == 0;
+                        if (spritePaletteColorIndex != 0x00) {
+                            if (spriteIndex == 0) {
+                                spriteZeroIsBeingRendered = true;
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+
+            int paletteIndex = 0;
+            int paletteColorIndex = 0;
+            if (backgroundPaletteColorIndex == 0 && spritePaletteColorIndex != 0) {
+                paletteIndex = spritePaletteIndex;
+                paletteColorIndex = spritePaletteColorIndex;
+            } else if (backgroundPaletteColorIndex != 0 && spritePaletteColorIndex == 0) {
+                paletteIndex = backgroundPaletteIndex;
+                paletteColorIndex = backgroundPaletteColorIndex;
+            } else if (backgroundPaletteColorIndex != 0 && spritePaletteColorIndex != 0) {
+                if (spriteHasRenderingPriority) {
+                    paletteIndex = spritePaletteIndex;
+                    paletteColorIndex = spritePaletteColorIndex;
+                } else {
+                    paletteIndex = backgroundPaletteIndex;
+                    paletteColorIndex = backgroundPaletteColorIndex;
+                }
+
+                if (spriteZeroHitIsPossible && spriteZeroIsBeingRendered && ppuMaskRegister.renderBackground && ppuMaskRegister.renderSprites) {
+                    int leftmostCycleToCheck = (~(ppuMaskRegister.renderBackgroundLeft | ppuMaskRegister.renderSpritesLeft)) ? 9 : 1;
+                    if (cycle >= leftmostCycleToCheck && cycle <= 256) {
+                        ppuStatusRegister.spriteZeroHit = 1;
+                    }
+                }
             }
 
             screen.SetPixel(cycle - 1, scanline, getPaletteColor(paletteIndex, paletteColorIndex));
@@ -548,16 +619,26 @@ void Ppu::transferBackgroundBytesToShiftRegisters() {
     backgroundAttributeMsbShiftRegister = (backgroundAttributeMsbShiftRegister & 0xFF00) | (nextBackgroundAttributeByte & 0x02 ? 0xFF : 0x00);
 }
 
-void Ppu::updateBackgroundShiftRegisters() {
-    if (!ppuMaskRegister.renderBackground) {
-        return;
+void Ppu::updateShiftRegisters() {
+    if (ppuMaskRegister.renderBackground) {
+        backgroundPatternLsbShiftRegister <<= 1;
+        backgroundPatternMsbShiftRegister <<= 1;
+
+        backgroundAttributeLsbShiftRegister <<= 1;
+        backgroundAttributeMsbShiftRegister <<= 1;
     }
 
-    backgroundPatternLsbShiftRegister <<= 1;
-    backgroundPatternMsbShiftRegister <<= 1;
-
-    backgroundAttributeLsbShiftRegister <<= 1;
-    backgroundAttributeMsbShiftRegister <<= 1;
+    if (ppuMaskRegister.renderSprites && cycle >= 2 && cycle <= 257) {
+        for (int spriteIndex = 0; spriteIndex < 8; spriteIndex++) {
+            struct spriteEntry* sprite = &secondaryOam[spriteIndex];
+            if (sprite->x > 0) {
+                sprite->x--;
+            } else {
+                spriteLsbShiftRegisters[spriteIndex] <<= 1;
+                spriteMsbShiftRegisters[spriteIndex] <<= 1;
+            }
+        }
+    }
 }
 
 void Ppu::writeToOam(nesByte address, nesByte data) {
@@ -566,4 +647,89 @@ void Ppu::writeToOam(nesByte address, nesByte data) {
 
 nesByte* Ppu::getOamBytes() {
     return oamBytes;
+}
+
+void Ppu::performSpriteEvaluation() {
+    for (int i = 0; i < 32; i++) {
+        secondaryOamBytes[i] = 0xFF;
+    }
+
+    spriteZeroHitIsPossible = false;
+    int spritesFoundOnScanline = 0;
+    for (int spriteIndex = 0; spriteIndex < 64; spriteIndex++) {
+        struct spriteEntry* sprite = &oam[spriteIndex];
+        int distanceToSprite = scanline - sprite->y;
+        if (distanceToSprite >= 0 && distanceToSprite < (ppuCtrlRegister.spriteSize ? 16 : 8)) {
+            if (spritesFoundOnScanline < 8) {
+                if (spriteIndex == 0) {
+                    spriteZeroHitIsPossible = true;
+                }
+
+                secondaryOam[spritesFoundOnScanline++] = *sprite;
+            } else {
+                ppuStatusRegister.spriteOverflow = 1;
+                break;
+            }
+        }
+    }
+}
+
+void Ppu::loadSpriteShiftRegisters() {
+    for (int spriteIndex = 0; spriteIndex < 8; spriteIndex++) {
+        struct spriteEntry* sprite = &secondaryOam[spriteIndex];
+        bool shouldFlipVertically = sprite->attributes & 0x80;
+        bool shouldFlipHorizontally = sprite->attributes & 0x40;
+
+        nesWord spriteLsbpByteAddress;
+        nesWord spriteMsbpByteAddress;
+
+        if (ppuCtrlRegister.spriteSize) {
+            // 8 x 16 sprites
+            nesWord cell;
+            nesWord row = scanline - sprite->y;
+            if (shouldFlipVertically) {
+                cell = row < 8 ? ((sprite->patternId & 0xFE) + 1) << 4 : (sprite->patternId & 0xFE) << 4;
+                row = 7 - row;
+            } else {
+                cell = row < 8 ? (sprite->patternId & 0xFE) << 4 : ((sprite->patternId & 0xFE) + 1) << 4;
+            }
+
+            spriteLsbpByteAddress =
+                ((sprite->patternId & 0x01) << 12) |
+                cell |
+                row
+            ;
+        } else {
+            // 8 x 8 sprites
+            nesWord row = scanline - sprite->y;
+            if (shouldFlipVertically) {
+                row = 7 - row;
+            }
+
+            spriteLsbpByteAddress =
+                (ppuCtrlRegister.patternSprite << 12) |
+                (sprite->patternId << 4) |
+                row
+            ;
+        }
+
+        spriteMsbpByteAddress = spriteLsbpByteAddress + 8;
+
+        nesByte spriteLsbpByte = readViaPpuBus(spriteLsbpByteAddress);
+        nesByte spriteMsbpByte = readViaPpuBus(spriteMsbpByteAddress);
+        if (shouldFlipHorizontally) {
+            // https://stackoverflow.com/a/2602885
+
+            spriteLsbpByte = ((spriteLsbpByte & 0xF0) >> 4) | ((spriteLsbpByte & 0x0F) << 4);
+            spriteLsbpByte = ((spriteLsbpByte & 0xCC) >> 2) | ((spriteLsbpByte & 0x33) << 2);
+            spriteLsbpByte = ((spriteLsbpByte & 0xAA) >> 1) | ((spriteLsbpByte & 0x55) << 1);
+
+            spriteMsbpByte = ((spriteMsbpByte & 0xF0) >> 4) | ((spriteMsbpByte & 0x0F) << 4);
+            spriteMsbpByte = ((spriteMsbpByte & 0xCC) >> 2) | ((spriteMsbpByte & 0x33) << 2);
+            spriteMsbpByte = ((spriteMsbpByte & 0xAA) >> 1) | ((spriteMsbpByte & 0x55) << 1);
+        }
+
+        spriteLsbShiftRegisters[spriteIndex] = spriteLsbpByte;
+        spriteMsbShiftRegisters[spriteIndex] = spriteMsbpByte;
+    }
 }

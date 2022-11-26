@@ -253,8 +253,6 @@ public:
                 );
             }
 
-            DrawRect(spriteX * 2, spriteY * 2, 16, 16);
-
             oamBytes += 4;
         }
     }
