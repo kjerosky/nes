@@ -685,20 +685,36 @@ void Ppu::loadSpriteShiftRegisters() {
 
         if (ppuCtrlRegister.spriteSize) {
             // 8 x 16 sprites
-            nesWord cell;
-            nesWord row = scanline - sprite->y;
-            if (shouldFlipVertically) {
-                cell = row < 8 ? ((sprite->patternId & 0xFE) + 1) << 4 : (sprite->patternId & 0xFE) << 4;
-                row = 7 - row;
+            if (sprite->attributes & 0x80) {
+                if (scanline - sprite->y < 8) {
+                    spriteLsbpByteAddress =
+                        ((sprite->patternId & 0x01) << 12) |
+                        (((sprite->patternId & 0xFE) + 1) << 4) |
+                        (7 - (scanline - sprite->y) & 0x07)
+                    ;
+                } else {
+                    spriteLsbpByteAddress =
+                        ((sprite->patternId & 0x01) << 12) |
+                        ((sprite->patternId & 0xFE) << 4) |
+                        (7 - (scanline - sprite->y) & 0x07)
+                    ;
+                }
             } else {
-                cell = row < 8 ? (sprite->patternId & 0xFE) << 4 : ((sprite->patternId & 0xFE) + 1) << 4;
-            }
+                if (scanline - sprite->y < 8) {
+                    spriteLsbpByteAddress =
+                        ((sprite->patternId & 0x01) << 12) |
+                        ((sprite->patternId & 0xFE) << 4) |
+                        ((scanline - sprite->y) & 0x07)
+                    ;
+                } else {
+                    spriteLsbpByteAddress =
+                        ((sprite->patternId & 0x01) << 12) |
+                        (((sprite->patternId & 0xFE) + 1) << 4) |
+                        ((scanline - sprite->y) & 0x07)
+                    ;
+                }
 
-            spriteLsbpByteAddress =
-                ((sprite->patternId & 0x01) << 12) |
-                cell |
-                row
-            ;
+            }
         } else {
             // 8 x 8 sprites
             nesWord row = scanline - sprite->y;
