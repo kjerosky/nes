@@ -26,5 +26,11 @@ bool Mapper000::mapPpuRead(nesWord requestedAddress, nesWord& mappedAddress) {
 }
 
 bool Mapper000::mapPpuWrite(nesWord requestedAddress, nesWord& mappedAddress) {
+    // If the CHR-ROM is actually CHR-RAM, we'll allow writes to it.
+    if (characterRomBankCount == 0) {
+        mappedAddress = requestedAddress;
+        return true;
+    }
+
     return false;
 }

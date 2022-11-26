@@ -43,8 +43,13 @@ Cartridge::Cartridge(std::string filename) {
         programRomData.resize(16384 * programRomBankCount);
         inputFileStream.read((char*)programRomData.data(), programRomData.size());
 
-        characterRomData.resize(8192 * characterRomBankCount);
-        inputFileStream.read((char*)characterRomData.data(), characterRomData.size());
+        if (characterRomBankCount == 0) {
+            // No CHR-ROM banks means that there is actually 8KB of CHR-RAM.
+            characterRomData.resize(8192 * 1);
+        } else {
+            characterRomData.resize(8192 * characterRomBankCount);
+            inputFileStream.read((char*)characterRomData.data(), characterRomData.size());
+        }
 
         inputFileStream.close();
 
