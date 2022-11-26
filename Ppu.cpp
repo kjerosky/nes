@@ -479,7 +479,7 @@ void Ppu::clockTick() {
         if (scanline >= 0 && scanline <= 239 && cycle >= 1 && cycle <= 256) {
             int backgroundPaletteIndex = 0;
             int backgroundPaletteColorIndex = 0;
-            if (ppuMaskRegister.renderBackground) {
+            if (ppuMaskRegister.renderBackground && (ppuMaskRegister.renderBackgroundLeft || cycle > 8)) {
                 nesWord bitMask = 0x8000 >> fineX;
                 backgroundPaletteIndex =
                     (backgroundAttributeMsbShiftRegister & bitMask ? 0x02 : 0x00) |
@@ -493,7 +493,7 @@ void Ppu::clockTick() {
             int spritePaletteIndex = 0;
             int spritePaletteColorIndex = 0;
             bool spriteHasRenderingPriority;
-            if (ppuMaskRegister.renderSprites) {
+            if (ppuMaskRegister.renderSprites && (ppuMaskRegister.renderSpritesLeft || cycle > 8)) {
                 for (int spriteIndex = 0; spriteIndex < 8; spriteIndex++) {
                     struct spriteEntry* sprite = &secondaryOam[spriteIndex];
                     if (sprite->x == 0) {
