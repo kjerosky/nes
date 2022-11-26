@@ -81,6 +81,12 @@ enum Cartridge::Mirroring Cartridge::getMirroring() {
     return mirroring;
 }
 
+void Cartridge::reset() {
+    if (mapper != nullptr) {
+        mapper->reset();
+    }
+}
+
 nesByte Cartridge::cpuRead(nesWord address) {
     nesWord mappedAddress;
     if (mapper->mapCpuRead(address, mappedAddress)) {

@@ -16,6 +16,8 @@ public:
 
     bool isValid();
 
+    void reset();
+
     nesByte cpuRead(nesWord address);
     void cpuWrite(nesWord address, nesByte data);
     nesByte ppuRead(nesWord address);

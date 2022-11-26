@@ -8,3 +8,7 @@ Mapper::Mapper(unsigned char programRomBankCount, unsigned char characterRomBank
 Mapper::~Mapper() {
     // do nothing
 }
+
+void Mapper::reset() {
+    // do nothing by default
+}
