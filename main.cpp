@@ -20,12 +20,13 @@ class Display : public olc::PixelGameEngine {
 
 private:
 
+    static Nes* nesInstance;
+
     Nes* nes;
     Cartridge* cartridge;
 
     std::string filename;
     CpuInfo cpuInfo;
-
 
     enum DisplayRenderMode {
         SPRITES_INFO_MODE,
@@ -42,6 +43,18 @@ public:
         this->filename = filename;
     }
 
+    static float createAudioSample(int channel, float globalTime, float timestep) {
+        if (channel != 0) {
+            return 0;
+        }
+
+        while(!nesInstance->clockForAudioSample()) {
+            // do nothing - just wait for the audio sample to be available
+        }
+
+        return nesInstance->getAudioSample();
+    }
+
     bool OnUserCreate() override {
         sAppName = "NES Emulator";
 
@@ -51,15 +64,43 @@ public:
         }
 
         nes = new Nes(cartridge);
+        nesInstance = nes;
 
-        displayRenderMode = SPRITES_INFO_MODE;
+        displayRenderMode = GAME_MODE;
 
         selectedPaletteIndex = 0;
+
+        int audioSampleFrequency = 44100;
+        nes->setAudioSampleRate(audioSampleFrequency);
+        olc::SOUND::InitialiseAudio(audioSampleFrequency, 1, 8, 512);
+        olc::SOUND::SetUserSynthFunction(createAudioSample);
 
         return true;
     }
 
     bool OnUserUpdate(float fElapsedTime) override {
+        updateControllerStates();
+
+        if (GetKey(olc::Key::ESCAPE).bPressed) {
+            return false;
+        } else if (GetKey(olc::Key::R).bPressed) {
+            nes->reset();
+        } else if (GetKey(olc::Key::M).bPressed) {
+            if (displayRenderMode == GAME_MODE) {
+                displayRenderMode = SPRITES_INFO_MODE;
+            } else if (displayRenderMode == SPRITES_INFO_MODE) {
+                displayRenderMode = GAME_MODE;
+            }
+        } else if (GetKey(olc::Key::P).bPressed && displayRenderMode == SPRITES_INFO_MODE) {
+            selectedPaletteIndex = (selectedPaletteIndex + 1) % 8;
+        }
+
+        renderDisplay();
+
+        return true;
+    }
+
+    bool updateWithoutAudio(float fElapsedTime) {
         updateControllerStates();
 
         if (GetKey(olc::Key::ESCAPE).bPressed) {
@@ -95,6 +136,8 @@ public:
     }
 
     bool OnUserDestroy() override {
+        olc::SOUND::DestroyAudio();
+
         delete nes;
         delete cartridge;
 
@@ -241,6 +284,8 @@ public:
         }
     }
 };
+
+Nes* Display::nesInstance = nullptr;
 
 int main(int argc, char* argv[]) {
     if (argc != 2) {

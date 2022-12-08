@@ -8,6 +8,7 @@ Nes::Nes(Cartridge* cartridge) {
     ppu = new Ppu(cartridge);
     bus = new Bus(ppu, cartridge);
     cpu = new Cpu(bus);
+    apu = new Apu();
 
     cycleCounter = 0;
     isContinuouslyExecuting = false;
@@ -20,6 +21,7 @@ Nes::~Nes() {
     delete bus;
     delete ppu;
     delete cpu;
+    delete apu;
 }
 
 olc::Sprite* Nes::getScreen() {
@@ -117,9 +119,13 @@ nesByte* Nes::getNameTable(int nameTableIndex) {
 }
 
 void Nes::reset() {
+    audioSample = 0;
+    audioTime = 0;
+
     cartridge->reset();
     ppu->reset();
     cpu->reset();
+    apu->reset();
     while (!cpu->isCurrentInstructionComplete()) {
         clockTick();
     }
@@ -139,8 +145,33 @@ void Nes::nmi() {
     }
 }
 
+void Nes::setAudioSampleRate(int sampleRate) {
+    audioSampleTime = 1.0 / sampleRate;
+    nesClockCycleTime = 1.0 / 5369318; // ppu clock cycle time
+}
+
+float Nes::getAudioSample() {
+    return audioSample;
+}
+
+bool Nes::clockForAudioSample() {
+    bool audioSampleIsReady = false;
+
+    clockTick();
+
+    audioTime += nesClockCycleTime;
+    if (audioTime >= audioSampleTime) {
+        audioTime -= audioSampleTime;
+        audioSample = apu->getAudioSampleOutput();
+        audioSampleIsReady = true;
+    }
+
+    return audioSampleIsReady;
+}
+
 void Nes::clockTick() {
     ppu->clockTick();
+    apu->clockTick();
 
     if (cycleCounter % 3 == 0) {
         cycleCounter = 0;

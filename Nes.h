@@ -10,6 +10,7 @@
 #include "Ppu.h"
 #include "Bus.h"
 #include "Cartridge.h"
+#include "Apu.h"
 
 class Nes {
 
@@ -21,6 +22,7 @@ private:
     Ppu* ppu;
     Bus* bus;
     Cartridge* cartridge;
+    Apu* apu;
 
 public:
 
@@ -39,6 +41,10 @@ public:
     olc::Pixel* getActivePalettesColors();
     nesByte* getNameTable(int nameTableIndex);
 
+    void setAudioSampleRate(int sampleRate);
+    float getAudioSample();
+    bool clockForAudioSample();
+
     void reset();
     void irq();
     void nmi();
@@ -52,6 +58,11 @@ private:
     int cycleCounter;
     bool isContinuouslyExecuting;
     float secondsUntilNextFrameDraw;
+
+    double audioSampleTime;
+    double nesClockCycleTime;
+    double audioTime;
+    float audioSample;
 
     void clockTick();
 };
