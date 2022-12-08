@@ -1,6 +1,10 @@
 #define OLC_PGE_APPLICATION
 #include "olcPixelGameEngine.h"
 
+#define USE_OPENAL
+#define OLC_PGEX_SOUND
+#include "olcPGEX_Sound.h"
+
 #include <string>
 #include <sstream>
 #include <cstdlib>
