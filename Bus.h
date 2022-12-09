@@ -3,6 +3,7 @@
 
 #include "Types.h"
 #include "Ppu.h"
+#include "Apu.h"
 #include "Cartridge.h"
 
 class Bus {
@@ -12,7 +13,7 @@ public:
     static const int RAM_SIZE = 2048;
     nesByte ram[RAM_SIZE];
 
-    Bus(Ppu* ppu, Cartridge* cartridge);
+    Bus(Ppu* ppu, Apu* apu, Cartridge* cartridge);
     ~Bus();
 
     nesByte cpuRead(nesWord address, bool onlyRead = false);
@@ -25,6 +26,7 @@ public:
 private:
 
     Ppu* ppu;
+    Apu* apu;
     Cartridge* cartridge;
 
     nesByte controllerStates[2];

@@ -6,9 +6,9 @@ Nes::Nes(Cartridge* cartridge) {
     this->cartridge = cartridge;
 
     ppu = new Ppu(cartridge);
-    bus = new Bus(ppu, cartridge);
-    cpu = new Cpu(bus);
     apu = new Apu();
+    bus = new Bus(ppu, apu, cartridge);
+    cpu = new Cpu(bus);
 
     cycleCounter = 0;
     isContinuouslyExecuting = false;

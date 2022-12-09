@@ -3,8 +3,9 @@
 
 using namespace std;
 
-Bus::Bus(Ppu* ppu, Cartridge* cartridge) {
+Bus::Bus(Ppu* ppu, Apu* apu, Cartridge* cartridge) {
     this->ppu = ppu;
+    this->apu = apu;
     this->cartridge = cartridge;
 
     fill(ram, ram + RAM_SIZE, 0);
@@ -35,7 +36,9 @@ void Bus::cpuWrite(nesWord address, nesByte value) {
     if (address >= 0x0000 && address <= 0x1FFF) {
         ram[address] = value;
     } else if (address >= 0x2000 && address <= 0x3FFF) {
-        return ppu->cpuWrite(address & 0x0007, value);
+        ppu->cpuWrite(address & 0x0007, value);
+    } else if ((address >= 0x4000 && address <= 0x4013) || address == 0x4015 || address == 0x4017) {
+        apu->cpuWrite(address, value);
     } else if (address == 0x4014) {
         dmaPage = value;
         dmaAddress = 0x00;
@@ -46,7 +49,7 @@ void Bus::cpuWrite(nesWord address, nesByte value) {
         int controllerId = address & 0x0001;
         latchedControllerStates[controllerId] = controllerStates[controllerId];
     } else if (address >= 0x8000 && address <= 0xFFFF) {
-        return cartridge->cpuWrite(address, value);
+        cartridge->cpuWrite(address, value);
     }
 }
 
