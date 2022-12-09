@@ -29,7 +29,11 @@ void Apu::clockTick() {
     if (cycleCount % 6 == 0) {
         cycleCount = 0;
 
-        pulse1Output = samplePulse(pulse1Enabled, pulse1Timer, pulse1DutyCycle);
+        if (pulse1Enabled && pulse1Timer >= 8) {
+            pulse1Output = samplePulse(pulse1Enabled, pulse1Timer, pulse1DutyCycle);
+        } else {
+            pulse1Output = 0;
+        }
     }
 
     cycleCount++;
@@ -208,8 +212,7 @@ void Apu::cpuWrite(nesWord address, nesByte data) {
         // Enable DMC (D), noise (N), triangle (T), and pulse channels (2/1)
         // ---D NT21
         case 0x4015:
-
-            //TODO
+            pulse1Enabled = data & 0x01;
             break;
 
         // =============== FRAME COUNTER ===============
