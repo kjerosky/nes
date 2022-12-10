@@ -4,6 +4,40 @@
 #define PI 3.14159f
 
 Apu::Apu() {
+    lengthsTable = std::vector<nesByte>(0x20);
+    lengthsTable[0x00] = 10;
+    lengthsTable[0x01] = 254;
+    lengthsTable[0x02] = 20;
+    lengthsTable[0x03] = 2;
+    lengthsTable[0x04] = 40;
+    lengthsTable[0x05] = 4;
+    lengthsTable[0x06] = 80;
+    lengthsTable[0x07] = 6;
+    lengthsTable[0x08] = 160;
+    lengthsTable[0x09] = 8;
+    lengthsTable[0x0A] = 60;
+    lengthsTable[0x0B] = 10;
+    lengthsTable[0x0C] = 14;
+    lengthsTable[0x0D] = 12;
+    lengthsTable[0x0E] = 26;
+    lengthsTable[0x0F] = 14;
+    lengthsTable[0x10] = 12;
+    lengthsTable[0x11] = 16;
+    lengthsTable[0x12] = 24;
+    lengthsTable[0x13] = 18;
+    lengthsTable[0x14] = 48;
+    lengthsTable[0x15] = 20;
+    lengthsTable[0x16] = 96;
+    lengthsTable[0x17] = 22;
+    lengthsTable[0x18] = 192;
+    lengthsTable[0x19] = 24;
+    lengthsTable[0x1A] = 72;
+    lengthsTable[0x1B] = 26;
+    lengthsTable[0x1C] = 16;
+    lengthsTable[0x1D] = 28;
+    lengthsTable[0x1E] = 32;
+    lengthsTable[0x1F] = 30;
+
     reset();
 }
 
@@ -19,6 +53,11 @@ void Apu::reset() {
     pulse1Timer = 0;
     pulse1DutyCycle = 0;
     pulse1Output = 0;
+    pulse1LengthCounter = 0;
+    pulse1LengthCounterHalted = true;
+
+    frameCounterCycle = 0;
+    frameCounterMode = 0;
 }
 
 void Apu::clockTick() {
@@ -29,11 +68,36 @@ void Apu::clockTick() {
     if (cycleCount % 6 == 0) {
         cycleCount = 0;
 
-        if (pulse1Enabled && pulse1Timer >= 8) {
+        bool onQuarterFrame = false;
+        bool onHalfFrame = false;
+        if (frameCounterCycle == 3729) {
+            onQuarterFrame = true;
+        } else if (frameCounterCycle == 7457) {
+            onQuarterFrame = true;
+            onHalfFrame = true;
+        } else if (frameCounterCycle == 11186) {
+            onQuarterFrame = true;
+        } else if ((frameCounterMode == 0 && frameCounterCycle == 14915) || (frameCounterMode == 1 && frameCounterCycle == 18641)) {
+            onQuarterFrame = true;
+            onHalfFrame = true;
+            frameCounterCycle = 0;
+        }
+
+        if (onHalfFrame) {
+            if (!pulse1Enabled) {
+                pulse1LengthCounter = 0;
+            } else if (pulse1LengthCounter > 0 && !pulse1LengthCounterHalted) {
+                pulse1LengthCounter--;
+            }
+        }
+
+        if (pulse1LengthCounter > 0 && pulse1Timer >= 8) {
             pulse1Output = samplePulse(pulse1Enabled, pulse1Timer, pulse1DutyCycle);
         } else {
             pulse1Output = 0;
         }
+
+        frameCounterCycle++;
     }
 
     cycleCount++;
@@ -67,6 +131,8 @@ void Apu::cpuWrite(nesWord address, nesByte data) {
                 case 0x02: pulse1DutyCycle = 0.500f; break;
                 case 0x03: pulse1DutyCycle = 0.750f; break;
             }
+
+            pulse1LengthCounterHalted = data & 0x20;
             break;
 
         // pulse 1
@@ -88,6 +154,7 @@ void Apu::cpuWrite(nesWord address, nesByte data) {
         // LLLL LTTT
         case 0x4003:
             pulse1Timer = ((data & 0x07) << 8) | (pulse1Timer & 0x00FF);
+            pulse1LengthCounter = lengthsTable[data >> 3];
             break;
 
         // =============== PULSE 2 ===============
@@ -221,7 +288,8 @@ void Apu::cpuWrite(nesWord address, nesByte data) {
         // Mode (M, 0 = 4-step, 1 = 5-step), IRQ inhibit flag (I)
         // MI-- ----
         case 0x4017:
-            //TODO
+            frameCounterMode = (data & 0x80) ? 1 : 0;
+            //TODO IRQ INHIBIT FLAG
             break;
     }
 }

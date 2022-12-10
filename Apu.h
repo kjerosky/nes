@@ -2,6 +2,7 @@
 #define APU_H
 
 #include "Types.h"
+#include <vector>
 
 class Apu {
 
@@ -19,6 +20,8 @@ public:
 
 private:
 
+    std::vector<nesByte> lengthsTable;
+
     float fastSin(float value);
     float samplePulse(bool enabled, nesWord timer, float dutyCycle);
 
@@ -29,6 +32,11 @@ private:
     nesWord pulse1Timer;
     float pulse1DutyCycle;
     float pulse1Output;
+    nesByte pulse1LengthCounter;
+    bool pulse1LengthCounterHalted;
+
+    int frameCounterCycle;
+    nesByte frameCounterMode;
 };
 
 #endif
