@@ -2,16 +2,16 @@
 
 #include <sstream>
 
-Nes::Nes(Cartridge* cartridge) {
+Nes::Nes(Cartridge* cartridge, SDL_Texture* screen_texture, const SDL_PixelFormatDetails* pixel_format_details) {
     this->cartridge = cartridge;
 
-    ppu = new Ppu(cartridge);
+    ppu = new Ppu(cartridge, screen_texture, pixel_format_details);
     apu = new Apu();
     bus = new Bus(ppu, apu, cartridge);
     cpu = new Cpu(bus);
 
     cycleCounter = 0;
-    isContinuouslyExecuting = false;
+    isContinuouslyExecuting = true;
     secondsUntilNextFrameDraw = 0;
 
     reset();
@@ -22,10 +22,6 @@ Nes::~Nes() {
     delete ppu;
     delete cpu;
     delete apu;
-}
-
-olc::Sprite* Nes::getScreen() {
-    return ppu->getScreen();
 }
 
 std::map<nesWord, std::string> Nes::disassemble(nesWord lowerAddress, nesWord upperAddress) {
@@ -104,14 +100,6 @@ CpuInfo Nes::getCpuInfo() {
 
 nesByte* Nes::getCpuRam() {
     return bus->ram;
-}
-
-olc::Sprite* Nes::getPatternTable(int patternTableIndex, int paletteIndex) {
-    return ppu->getPatternTable(patternTableIndex, paletteIndex);
-}
-
-olc::Pixel* Nes::getActivePalettesColors() {
-    return ppu->getActivePalettesColors();
 }
 
 nesByte* Nes::getNameTable(int nameTableIndex) {

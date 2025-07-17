@@ -4,7 +4,6 @@
 #include <sstream>
 #include <map>
 
-#include "olcPixelGameEngine.h"
 #include "Types.h"
 #include "Cpu.h"
 #include "Ppu.h"
@@ -26,10 +25,9 @@ private:
 
 public:
 
-    Nes(Cartridge* cartridge);
+    Nes(Cartridge* cartridge, SDL_Texture* screen_texture, const SDL_PixelFormatDetails* pixel_format_details);
     ~Nes();
 
-    olc::Sprite* getScreen();
     std::map<nesWord, std::string> disassemble(nesWord lowerAddress, nesWord upperAddress);
     void executeNextInstruction();
     void displayNextFrame();
@@ -37,8 +35,6 @@ public:
     void processTimeElapsed(float secondsElapsed);
     CpuInfo getCpuInfo();
     nesByte* getCpuRam();
-    olc::Sprite* getPatternTable(int patternTableIndex, int paletteIndex);
-    olc::Pixel* getActivePalettesColors();
     nesByte* getNameTable(int nameTableIndex);
 
     void setAudioSampleRate(int sampleRate);

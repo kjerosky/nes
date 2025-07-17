@@ -1,3 +1,5 @@
-nes
-nes.dSYM
 .vscode
+
+.DS_Store
+
+build

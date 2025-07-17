@@ -1,7 +1,8 @@
 #ifndef PPU_H
 #define PPU_H
 
-#include "olcPixelGameEngine.h"
+#include <SDL3/SDL.h>
+
 #include "Cartridge.h"
 #include "Types.h"
 
@@ -9,10 +10,9 @@ class Ppu {
 
 public:
 
-    Ppu(Cartridge* cartridge);
+    Ppu(Cartridge* cartridge, SDL_Texture* screen_texture, const SDL_PixelFormatDetails* pixel_format_details);
     ~Ppu();
 
-    olc::Sprite* getScreen();
     void clockTick();
     bool isFrameComplete();
     void acknowledgeFrameWasCompleted();
@@ -22,22 +22,20 @@ public:
     nesByte cpuRead(nesWord address, bool onlyRead = false);
     void cpuWrite(nesWord address, nesByte data);
 
-    olc::Sprite* getPatternTable(int patternTableIndex, int paletteIndex);
-    olc::Pixel* getActivePalettesColors();
     nesByte* getNameTable(int nameTableIndex);
 
     void writeToOam(nesByte address, nesByte data);
     nesByte* getOamBytes();
+
 private:
 
     Cartridge* cartridge;
 
-    olc::Pixel nesMainPalette[0x40];
+    Uint32 nesMainPalette[0x40];
     nesByte activePalettesBytes[32];
-    olc::Pixel activePalettesColors[32];
 
-    olc::Sprite screen;
-    olc::Sprite patternTables[2];
+    Uint32* screen_pixels;
+    SDL_Texture* screen_texture;
 
     nesByte nameTables[2][1024];
 
@@ -129,8 +127,8 @@ private:
     bool ppuAddressLatchUseLoByte;
     nesByte ppuDataBuffer;
 
-    void initializePalette();
-    olc::Pixel getPaletteColor(int paletteIndex, int paletteColorIndex);
+    void initializePalette(const SDL_PixelFormatDetails* pixel_format_details);
+    Uint32 getPaletteColor(int paletteIndex, int paletteColorIndex);
 
     nesByte readViaPpuBus(nesWord address, bool onlyRead = false);
     void writeViaPpuBus(nesWord address, nesByte data);
@@ -205,6 +203,8 @@ private:
     void performSpriteEvaluation();
     void performDataFetchesForSpritesToRenderNext();
     void loadSpriteShiftRegisters();
+
+    void copy_pixel_data_to_screen_texture();
 };
 
 #endif

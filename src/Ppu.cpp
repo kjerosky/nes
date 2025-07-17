@@ -1,96 +1,92 @@
 #include "Ppu.h"
 
-Ppu::Ppu(Cartridge* cartridge) {
-    this->cartridge = cartridge;
+Ppu::Ppu(Cartridge* cartridge, SDL_Texture* screen_texture, const SDL_PixelFormatDetails* pixel_format_details)
+:
+cartridge(cartridge),
+screen_texture(screen_texture) {
 
-    screen = olc::Sprite(256, 240);
-    patternTables[0] = olc::Sprite(128, 128);
-    patternTables[1] = olc::Sprite(128, 128);
+    screen_pixels = new Uint32[screen_texture->w * screen_texture->h];
 
-    initializePalette();
+    initializePalette(pixel_format_details);
 
     reset();
 }
 
 Ppu::~Ppu() {
-    // do nothing
+    delete[] screen_pixels;
 }
 
-olc::Sprite* Ppu::getScreen() {
-    return &screen;
+void Ppu::initializePalette(const SDL_PixelFormatDetails* pixel_format_details) {
+    nesMainPalette[0x00] = SDL_MapRGB(pixel_format_details, nullptr, 84, 84, 84);
+    nesMainPalette[0x01] = SDL_MapRGB(pixel_format_details, nullptr, 0, 30, 116);
+    nesMainPalette[0x02] = SDL_MapRGB(pixel_format_details, nullptr, 8, 16, 144);
+    nesMainPalette[0x03] = SDL_MapRGB(pixel_format_details, nullptr, 48, 0, 136);
+    nesMainPalette[0x04] = SDL_MapRGB(pixel_format_details, nullptr, 68, 0, 100);
+    nesMainPalette[0x05] = SDL_MapRGB(pixel_format_details, nullptr, 92, 0, 48);
+    nesMainPalette[0x06] = SDL_MapRGB(pixel_format_details, nullptr, 84, 4, 0);
+    nesMainPalette[0x07] = SDL_MapRGB(pixel_format_details, nullptr, 60, 24, 0);
+    nesMainPalette[0x08] = SDL_MapRGB(pixel_format_details, nullptr, 32, 42, 0);
+    nesMainPalette[0x09] = SDL_MapRGB(pixel_format_details, nullptr, 8, 58, 0);
+    nesMainPalette[0x0A] = SDL_MapRGB(pixel_format_details, nullptr, 0, 64, 0);
+    nesMainPalette[0x0B] = SDL_MapRGB(pixel_format_details, nullptr, 0, 60, 0);
+    nesMainPalette[0x0C] = SDL_MapRGB(pixel_format_details, nullptr, 0, 50, 60);
+    nesMainPalette[0x0D] = SDL_MapRGB(pixel_format_details, nullptr, 0, 0, 0);
+    nesMainPalette[0x0E] = SDL_MapRGB(pixel_format_details, nullptr, 0, 0, 0);
+    nesMainPalette[0x0F] = SDL_MapRGB(pixel_format_details, nullptr, 0, 0, 0);
+
+    nesMainPalette[0x10] = SDL_MapRGB(pixel_format_details, nullptr, 152, 150, 152);
+    nesMainPalette[0x11] = SDL_MapRGB(pixel_format_details, nullptr, 8, 76, 196);
+    nesMainPalette[0x12] = SDL_MapRGB(pixel_format_details, nullptr, 48, 50, 236);
+    nesMainPalette[0x13] = SDL_MapRGB(pixel_format_details, nullptr, 92, 30, 228);
+    nesMainPalette[0x14] = SDL_MapRGB(pixel_format_details, nullptr, 136, 20, 176);
+    nesMainPalette[0x15] = SDL_MapRGB(pixel_format_details, nullptr, 160, 20, 100);
+    nesMainPalette[0x16] = SDL_MapRGB(pixel_format_details, nullptr, 152, 34, 32);
+    nesMainPalette[0x17] = SDL_MapRGB(pixel_format_details, nullptr, 120, 60, 0);
+    nesMainPalette[0x18] = SDL_MapRGB(pixel_format_details, nullptr, 84, 90, 0);
+    nesMainPalette[0x19] = SDL_MapRGB(pixel_format_details, nullptr, 40, 114, 0);
+    nesMainPalette[0x1A] = SDL_MapRGB(pixel_format_details, nullptr, 8, 124, 0);
+    nesMainPalette[0x1B] = SDL_MapRGB(pixel_format_details, nullptr, 0, 118, 40);
+    nesMainPalette[0x1C] = SDL_MapRGB(pixel_format_details, nullptr, 0, 102, 120);
+    nesMainPalette[0x1D] = SDL_MapRGB(pixel_format_details, nullptr, 0, 0, 0);
+    nesMainPalette[0x1E] = SDL_MapRGB(pixel_format_details, nullptr, 0, 0, 0);
+    nesMainPalette[0x1F] = SDL_MapRGB(pixel_format_details, nullptr, 0, 0, 0);
+
+    nesMainPalette[0x20] = SDL_MapRGB(pixel_format_details, nullptr, 236, 238, 236);
+    nesMainPalette[0x21] = SDL_MapRGB(pixel_format_details, nullptr, 76, 154, 236);
+    nesMainPalette[0x22] = SDL_MapRGB(pixel_format_details, nullptr, 120, 124, 236);
+    nesMainPalette[0x23] = SDL_MapRGB(pixel_format_details, nullptr, 176, 98, 236);
+    nesMainPalette[0x24] = SDL_MapRGB(pixel_format_details, nullptr, 228, 84, 236);
+    nesMainPalette[0x25] = SDL_MapRGB(pixel_format_details, nullptr, 236, 88, 180);
+    nesMainPalette[0x26] = SDL_MapRGB(pixel_format_details, nullptr, 236, 106, 100);
+    nesMainPalette[0x27] = SDL_MapRGB(pixel_format_details, nullptr, 212, 136, 32);
+    nesMainPalette[0x28] = SDL_MapRGB(pixel_format_details, nullptr, 160, 170, 0);
+    nesMainPalette[0x29] = SDL_MapRGB(pixel_format_details, nullptr, 116, 196, 0);
+    nesMainPalette[0x2A] = SDL_MapRGB(pixel_format_details, nullptr, 76, 208, 32);
+    nesMainPalette[0x2B] = SDL_MapRGB(pixel_format_details, nullptr, 56, 204, 108);
+    nesMainPalette[0x2C] = SDL_MapRGB(pixel_format_details, nullptr, 56, 180, 204);
+    nesMainPalette[0x2D] = SDL_MapRGB(pixel_format_details, nullptr, 60, 60, 60);
+    nesMainPalette[0x2E] = SDL_MapRGB(pixel_format_details, nullptr, 0, 0, 0);
+    nesMainPalette[0x2F] = SDL_MapRGB(pixel_format_details, nullptr, 0, 0, 0);
+
+    nesMainPalette[0x30] = SDL_MapRGB(pixel_format_details, nullptr, 236, 238, 236);
+    nesMainPalette[0x31] = SDL_MapRGB(pixel_format_details, nullptr, 168, 204, 236);
+    nesMainPalette[0x32] = SDL_MapRGB(pixel_format_details, nullptr, 188, 188, 236);
+    nesMainPalette[0x33] = SDL_MapRGB(pixel_format_details, nullptr, 212, 178, 236);
+    nesMainPalette[0x34] = SDL_MapRGB(pixel_format_details, nullptr, 236, 174, 236);
+    nesMainPalette[0x35] = SDL_MapRGB(pixel_format_details, nullptr, 236, 174, 212);
+    nesMainPalette[0x36] = SDL_MapRGB(pixel_format_details, nullptr, 236, 180, 176);
+    nesMainPalette[0x37] = SDL_MapRGB(pixel_format_details, nullptr, 228, 196, 144);
+    nesMainPalette[0x38] = SDL_MapRGB(pixel_format_details, nullptr, 204, 210, 120);
+    nesMainPalette[0x39] = SDL_MapRGB(pixel_format_details, nullptr, 180, 222, 120);
+    nesMainPalette[0x3A] = SDL_MapRGB(pixel_format_details, nullptr, 168, 226, 144);
+    nesMainPalette[0x3B] = SDL_MapRGB(pixel_format_details, nullptr, 152, 226, 180);
+    nesMainPalette[0x3C] = SDL_MapRGB(pixel_format_details, nullptr, 160, 214, 228);
+    nesMainPalette[0x3D] = SDL_MapRGB(pixel_format_details, nullptr, 160, 162, 160);
+    nesMainPalette[0x3E] = SDL_MapRGB(pixel_format_details, nullptr, 0, 0, 0);
+    nesMainPalette[0x3F] = SDL_MapRGB(pixel_format_details, nullptr, 0, 0, 0);
 }
 
-void Ppu::initializePalette() {
-    nesMainPalette[0x00] = olc::Pixel(84, 84, 84);
-    nesMainPalette[0x01] = olc::Pixel(0, 30, 116);
-    nesMainPalette[0x02] = olc::Pixel(8, 16, 144);
-    nesMainPalette[0x03] = olc::Pixel(48, 0, 136);
-    nesMainPalette[0x04] = olc::Pixel(68, 0, 100);
-    nesMainPalette[0x05] = olc::Pixel(92, 0, 48);
-    nesMainPalette[0x06] = olc::Pixel(84, 4, 0);
-    nesMainPalette[0x07] = olc::Pixel(60, 24, 0);
-    nesMainPalette[0x08] = olc::Pixel(32, 42, 0);
-    nesMainPalette[0x09] = olc::Pixel(8, 58, 0);
-    nesMainPalette[0x0A] = olc::Pixel(0, 64, 0);
-    nesMainPalette[0x0B] = olc::Pixel(0, 60, 0);
-    nesMainPalette[0x0C] = olc::Pixel(0, 50, 60);
-    nesMainPalette[0x0D] = olc::Pixel(0, 0, 0);
-    nesMainPalette[0x0E] = olc::Pixel(0, 0, 0);
-    nesMainPalette[0x0F] = olc::Pixel(0, 0, 0);
-
-    nesMainPalette[0x10] = olc::Pixel(152, 150, 152);
-    nesMainPalette[0x11] = olc::Pixel(8, 76, 196);
-    nesMainPalette[0x12] = olc::Pixel(48, 50, 236);
-    nesMainPalette[0x13] = olc::Pixel(92, 30, 228);
-    nesMainPalette[0x14] = olc::Pixel(136, 20, 176);
-    nesMainPalette[0x15] = olc::Pixel(160, 20, 100);
-    nesMainPalette[0x16] = olc::Pixel(152, 34, 32);
-    nesMainPalette[0x17] = olc::Pixel(120, 60, 0);
-    nesMainPalette[0x18] = olc::Pixel(84, 90, 0);
-    nesMainPalette[0x19] = olc::Pixel(40, 114, 0);
-    nesMainPalette[0x1A] = olc::Pixel(8, 124, 0);
-    nesMainPalette[0x1B] = olc::Pixel(0, 118, 40);
-    nesMainPalette[0x1C] = olc::Pixel(0, 102, 120);
-    nesMainPalette[0x1D] = olc::Pixel(0, 0, 0);
-    nesMainPalette[0x1E] = olc::Pixel(0, 0, 0);
-    nesMainPalette[0x1F] = olc::Pixel(0, 0, 0);
-
-    nesMainPalette[0x20] = olc::Pixel(236, 238, 236);
-    nesMainPalette[0x21] = olc::Pixel(76, 154, 236);
-    nesMainPalette[0x22] = olc::Pixel(120, 124, 236);
-    nesMainPalette[0x23] = olc::Pixel(176, 98, 236);
-    nesMainPalette[0x24] = olc::Pixel(228, 84, 236);
-    nesMainPalette[0x25] = olc::Pixel(236, 88, 180);
-    nesMainPalette[0x26] = olc::Pixel(236, 106, 100);
-    nesMainPalette[0x27] = olc::Pixel(212, 136, 32);
-    nesMainPalette[0x28] = olc::Pixel(160, 170, 0);
-    nesMainPalette[0x29] = olc::Pixel(116, 196, 0);
-    nesMainPalette[0x2A] = olc::Pixel(76, 208, 32);
-    nesMainPalette[0x2B] = olc::Pixel(56, 204, 108);
-    nesMainPalette[0x2C] = olc::Pixel(56, 180, 204);
-    nesMainPalette[0x2D] = olc::Pixel(60, 60, 60);
-    nesMainPalette[0x2E] = olc::Pixel(0, 0, 0);
-    nesMainPalette[0x2F] = olc::Pixel(0, 0, 0);
-
-    nesMainPalette[0x30] = olc::Pixel(236, 238, 236);
-    nesMainPalette[0x31] = olc::Pixel(168, 204, 236);
-    nesMainPalette[0x32] = olc::Pixel(188, 188, 236);
-    nesMainPalette[0x33] = olc::Pixel(212, 178, 236);
-    nesMainPalette[0x34] = olc::Pixel(236, 174, 236);
-    nesMainPalette[0x35] = olc::Pixel(236, 174, 212);
-    nesMainPalette[0x36] = olc::Pixel(236, 180, 176);
-    nesMainPalette[0x37] = olc::Pixel(228, 196, 144);
-    nesMainPalette[0x38] = olc::Pixel(204, 210, 120);
-    nesMainPalette[0x39] = olc::Pixel(180, 222, 120);
-    nesMainPalette[0x3A] = olc::Pixel(168, 226, 144);
-    nesMainPalette[0x3B] = olc::Pixel(152, 226, 180);
-    nesMainPalette[0x3C] = olc::Pixel(160, 214, 228);
-    nesMainPalette[0x3D] = olc::Pixel(160, 162, 160);
-    nesMainPalette[0x3E] = olc::Pixel(0, 0, 0);
-    nesMainPalette[0x3F] = olc::Pixel(0, 0, 0);
-}
-
-olc::Pixel Ppu::getPaletteColor(int paletteIndex, int paletteColorIndex) {
+Uint32 Ppu::getPaletteColor(int paletteIndex, int paletteColorIndex) {
     int mainNesPaletteIndex = readViaPpuBus(0x3F00 + paletteIndex * 4 + paletteColorIndex, true);
     return nesMainPalette[mainNesPaletteIndex];
 }
@@ -140,42 +136,6 @@ void Ppu::reset() {
     oamAddress = 0x00;
     spriteZeroHitIsPossible = false;
     spriteZeroIsBeingRendered = false;
-}
-
-olc::Sprite* Ppu::getPatternTable(int patternTableIndex, int paletteIndex) {
-    for (nesWord tileRow = 0; tileRow < 16; tileRow++) {
-        for (nesWord tileColumn = 0; tileColumn < 16; tileColumn++) {
-            nesWord patternTableOffset = tileRow * 256 + tileColumn * 16;
-            for (nesWord pixelRow = 0; pixelRow < 8; pixelRow++) {
-                nesByte lineLsbpByte = readViaPpuBus(
-                    patternTableIndex * 0x1000 + patternTableOffset + pixelRow, true);
-                nesByte lineMsbpByte = readViaPpuBus(
-                    patternTableIndex * 0x1000 + patternTableOffset + pixelRow + 8, true);
-
-                for (nesByte pixelColumn = 0; pixelColumn < 8; pixelColumn++) {
-                    nesByte paletteColorIndex = ((lineMsbpByte & 0x01) << 1) | (lineLsbpByte & 0x01);
-                    lineMsbpByte >>= 1;
-                    lineLsbpByte >>= 1;
-                    olc::Pixel color = getPaletteColor(paletteIndex, paletteColorIndex);
-                    patternTables[patternTableIndex].SetPixel(
-                        tileColumn * 8 + (7 - pixelColumn),
-                        tileRow * 8 + pixelRow,
-                        color
-                    );
-                }
-            }
-        }
-    }
-
-    return &patternTables[patternTableIndex];
-}
-
-olc::Pixel* Ppu::getActivePalettesColors() {
-    for (int i = 0; i < 32; i++) {
-        activePalettesColors[i] = nesMainPalette[readViaPpuBus(0x3F00 + i, true)];
-    }
-
-    return activePalettesColors;
 }
 
 nesByte* Ppu::getNameTable(int nameTableIndex) {
@@ -538,11 +498,13 @@ void Ppu::clockTick() {
                 }
             }
 
-            screen.SetPixel(cycle - 1, scanline, getPaletteColor(paletteIndex, paletteColorIndex));
+            screen_pixels[scanline * screen_texture->w + (cycle - 1)] = getPaletteColor(paletteIndex, paletteColorIndex);
         }
     }
 
     if (scanline == 241 && cycle == 1) {
+        copy_pixel_data_to_screen_texture();
+
         ppuStatusRegister.verticalBlank = 1;
         if (ppuCtrlRegister.nmiEnabled) {
             wasNmiSignaled = true;
@@ -748,4 +710,16 @@ void Ppu::loadSpriteShiftRegisters() {
         spriteLsbShiftRegisters[spriteIndex] = spriteLsbpByte;
         spriteMsbShiftRegisters[spriteIndex] = spriteMsbpByte;
     }
+}
+
+void Ppu::copy_pixel_data_to_screen_texture() {
+    Uint32* texture_pixels;
+    int texture_pixels_row_length;
+    SDL_LockTexture(screen_texture, nullptr, (void**)&texture_pixels, &texture_pixels_row_length);
+
+    for (int i = 0; i < screen_texture->w * screen_texture->h; i++) {
+        texture_pixels[i] = screen_pixels[i];
+    }
+
+    SDL_UnlockTexture(screen_texture);
 }
