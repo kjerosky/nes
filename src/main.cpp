@@ -190,6 +190,8 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
+    SDL_SetRenderVSync(renderer, 1);
+
     screen_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STREAMING, NES_SCREEN_WIDTH, NES_SCREEN_HEIGHT);
     if (screen_texture == nullptr) {
         std::cerr << "[ERROR] SDL_CreateTexture error:" << SDL_GetError() << std::endl;
