@@ -78,6 +78,10 @@ void Apu::clockTick() {
             frameCounterCycle = 0;
         }
 
+        if (onQuarterFrame) {
+            pulse_channel_1.clock_quarter_frame();
+        }
+
         if (onHalfFrame) {
             pulse_channel_1.clock_half_frame();
         }
@@ -114,6 +118,7 @@ void Apu::cpuWrite(nesWord address, nesByte data) {
         case 0x4000:
             pulse_channel_1.set_duty_cycle(data >> 6);
             pulse_channel_1.set_length_counter_halted((data & 0x20) != 0);
+            pulse_channel_1.set_envelope_volume_values((data & 0x10) != 0, data & 0x0F);
             break;
 
         // pulse 1
@@ -136,6 +141,7 @@ void Apu::cpuWrite(nesWord address, nesByte data) {
         case 0x4003:
             pulse_channel_1.set_timer_upper_byte(data & 0x07);
             pulse_channel_1.set_length_counter(lengthsTable[data >> 3]);
+            pulse_channel_1.restart_envelope();
             break;
 
         // =============== PULSE 2 ===============

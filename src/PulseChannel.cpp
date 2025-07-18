@@ -18,8 +18,16 @@ void PulseChannel::reset() {
     is_enabled = false;
     timer = 0;
     length_counter = 0;
-    is_length_counter_halted = true;
     duty_cycle = 0.0f;
+    set_length_counter_halted(true);
+
+    envelope.set_volume_values(true, 0);
+}
+
+// --------------------------------------------------------------------------
+
+void PulseChannel::clock_quarter_frame() {
+    envelope.clock();
 }
 
 // --------------------------------------------------------------------------
@@ -71,6 +79,21 @@ void PulseChannel::set_length_counter(Uint8 length_counter) {
 
 void PulseChannel::set_length_counter_halted(bool is_length_counter_halted) {
     this->is_length_counter_halted = is_length_counter_halted;
+
+    // The envelope loop and length counter halted flags share the same value.
+    envelope.set_looping(is_length_counter_halted);
+}
+
+// --------------------------------------------------------------------------
+
+void PulseChannel::set_envelope_volume_values(bool use_constant_volume, Uint8 divider_period) {
+    envelope.set_volume_values(use_constant_volume, divider_period);
+}
+
+// --------------------------------------------------------------------------
+
+void PulseChannel::restart_envelope() {
+    envelope.restart();
 }
 
 // --------------------------------------------------------------------------
@@ -95,7 +118,9 @@ float PulseChannel::sample(double global_time) {
         output = 2.0f / SDL_PI_F * (a - b);
     }
 
-    return output;
+    float volume_scale = envelope.get_volume() / 16.0f;
+
+    return output * volume_scale;
 }
 
 // --------------------------------------------------------------------------
