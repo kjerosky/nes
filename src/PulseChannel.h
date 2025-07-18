@@ -4,12 +4,13 @@
 #include <SDL3/SDL.h>
 
 #include "Envelope.h"
+#include "Sweep.h"
 
 class PulseChannel {
 
 public:
 
-    PulseChannel();
+    PulseChannel(bool is_pulse_2);
     ~PulseChannel();
 
     void reset();
@@ -22,6 +23,7 @@ public:
     void set_length_counter(Uint8 length_counter);
     void set_length_counter_halted(bool is_length_counter_halted);
     void set_envelope_volume_values(bool use_constant_volume, Uint8 divider_period);
+    void set_sweep_values(bool is_enabled, Uint8 divider_period, bool is_negated, Uint8 shift);
     void restart_envelope();
     float sample(double global_time);
 
@@ -34,6 +36,7 @@ private:
     float duty_cycle;
 
     Envelope envelope;
+    Sweep sweep;
 
     float fast_sin(float value);
 };

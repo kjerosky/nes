@@ -3,7 +3,11 @@
 
 #define PI 3.14159f
 
-Apu::Apu() {
+Apu::Apu()
+:
+pulse_channel_1(false),
+pulse_channel_2(true) {
+
     lengthsTable = std::vector<nesByte>(0x20);
     lengthsTable[0x00] = 10;
     lengthsTable[0x01] = 254;
@@ -128,7 +132,12 @@ void Apu::cpuWrite(nesWord address, nesByte data) {
         // Sweep unit: enabled (E), period (P), negate (N), shift (S)
         // EPPP NSSS
         case 0x4001:
-            //TODO
+            pulse_channel_1.set_sweep_values(
+                (data & 0x80) != 0,
+                (data >> 4) & 0x07,
+                (data & 0x08) != 0,
+                data & 0x07
+            );
             break;
 
         // pulse 1
@@ -162,7 +171,12 @@ void Apu::cpuWrite(nesWord address, nesByte data) {
         // Sweep unit: enabled (E), period (P), negate (N), shift (S)
         // EPPP NSSS
         case 0x4005:
-            //TODO
+            pulse_channel_2.set_sweep_values(
+                (data & 0x80) != 0,
+                (data >> 4) & 0x07,
+                (data & 0x08) != 0,
+                data & 0x07
+            );
             break;
 
         // pulse 2

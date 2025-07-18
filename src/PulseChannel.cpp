@@ -2,7 +2,10 @@
 
 // --------------------------------------------------------------------------
 
-PulseChannel::PulseChannel() {
+PulseChannel::PulseChannel(bool is_pulse_2)
+:
+sweep(is_pulse_2) {
+
     reset();
 }
 
@@ -38,6 +41,8 @@ void PulseChannel::clock_half_frame() {
     } else if (length_counter > 0 && !is_length_counter_halted) {
         length_counter--;
     }
+
+    sweep.clock(timer);
 }
 
 // --------------------------------------------------------------------------
@@ -88,6 +93,12 @@ void PulseChannel::set_length_counter_halted(bool is_length_counter_halted) {
 
 void PulseChannel::set_envelope_volume_values(bool use_constant_volume, Uint8 divider_period) {
     envelope.set_volume_values(use_constant_volume, divider_period);
+}
+
+// --------------------------------------------------------------------------
+
+void PulseChannel::set_sweep_values(bool is_enabled, Uint8 divider_period, bool is_negated, Uint8 shift) {
+    sweep.set_values(is_enabled, divider_period, is_negated, shift);
 }
 
 // --------------------------------------------------------------------------
