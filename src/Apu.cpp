@@ -49,12 +49,7 @@ void Apu::reset() {
     globalTime = 0;
     cycleCount = 0;
 
-    pulse1Enabled = false;
-    pulse1Timer = 0;
-    pulse1DutyCycle = 0;
-    pulse1Output = 0;
-    pulse1LengthCounter = 0;
-    pulse1LengthCounterHalted = true;
+    pulse_channel_1.reset();
 
     frameCounterCycle = 0;
     frameCounterMode = 0;
@@ -84,17 +79,7 @@ void Apu::clockTick() {
         }
 
         if (onHalfFrame) {
-            if (!pulse1Enabled) {
-                pulse1LengthCounter = 0;
-            } else if (pulse1LengthCounter > 0 && !pulse1LengthCounterHalted) {
-                pulse1LengthCounter--;
-            }
-        }
-
-        if (pulse1LengthCounter > 0 && pulse1Timer >= 8) {
-            pulse1Output = samplePulse(pulse1Enabled, pulse1Timer, pulse1DutyCycle);
-        } else {
-            pulse1Output = 0;
+            pulse_channel_1.clock_half_frame();
         }
 
         frameCounterCycle++;
@@ -105,17 +90,20 @@ void Apu::clockTick() {
 
 float Apu::getAudioSampleOutput() {
     //TODO IMPLEMENT CHANNEL MIXING
-    return pulse1Output;
+    return pulse_channel_1.sample(globalTime);
 }
 
 nesByte Apu::cpuRead(nesWord address, bool onlyRead) {
-    //TODO IMPLEMENT THIS
-    return 0x00;
+    nesByte value = 0x00;
+
+    if (address == 0x4015) {
+        //TODO IMPLEMENT THIS
+    }
+
+    return value;
 }
 
 void Apu::cpuWrite(nesWord address, nesByte data) {
-    nesByte dutyCycleBits;
-
     switch (address) {
 
         // =============== PULSE 1 ===============
@@ -124,15 +112,8 @@ void Apu::cpuWrite(nesWord address, nesByte data) {
         // Duty (D), envelope loop / length counter halt (L), constant volume (C), volume/envelope (V)
         // DDLC VVVV
         case 0x4000:
-            dutyCycleBits = data >> 6;
-            switch (dutyCycleBits) {
-                case 0x00: pulse1DutyCycle = 0.125f; break;
-                case 0x01: pulse1DutyCycle = 0.250f; break;
-                case 0x02: pulse1DutyCycle = 0.500f; break;
-                case 0x03: pulse1DutyCycle = 0.750f; break;
-            }
-
-            pulse1LengthCounterHalted = data & 0x20;
+            pulse_channel_1.set_duty_cycle(data >> 6);
+            pulse_channel_1.set_length_counter_halted((data & 0x20) != 0);
             break;
 
         // pulse 1
@@ -146,15 +127,15 @@ void Apu::cpuWrite(nesWord address, nesByte data) {
         // Timer low (T)
         // TTTT TTTT
         case 0x4002:
-            pulse1Timer = (pulse1Timer & 0xFF00) | data;
+            pulse_channel_1.set_timer_lower_byte(data);
             break;
 
         // pulse 1
         // Length counter load (L), timer high (T)
         // LLLL LTTT
         case 0x4003:
-            pulse1Timer = ((data & 0x07) << 8) | (pulse1Timer & 0x00FF);
-            pulse1LengthCounter = lengthsTable[data >> 3];
+            pulse_channel_1.set_timer_upper_byte(data & 0x07);
+            pulse_channel_1.set_length_counter(lengthsTable[data >> 3]);
             break;
 
         // =============== PULSE 2 ===============
@@ -279,7 +260,8 @@ void Apu::cpuWrite(nesWord address, nesByte data) {
         // Enable DMC (D), noise (N), triangle (T), and pulse channels (2/1)
         // ---D NT21
         case 0x4015:
-            pulse1Enabled = data & 0x01;
+            pulse_channel_1.set_enabled((data & 0x01) != 0);
+            //todo add others here!!!
             break;
 
         // =============== FRAME COUNTER ===============
@@ -292,27 +274,4 @@ void Apu::cpuWrite(nesWord address, nesByte data) {
             //TODO IRQ INHIBIT FLAG
             break;
     }
-}
-
-float Apu::fastSin(float value) {
-    float j = value * 0.15915;
-    j = j - (int)j;
-    return 20.785 * j * (j - 0.5) * (j - 1.0f);
-}
-
-float Apu::samplePulse(bool enabled, nesWord timer, float dutyCycle) {
-    float a = 0;
-    float b = 0;
-
-    int harmonics = 20;
-    double frequency = 1789773.0 / (16 * (double)(timer + 1));
-    float p = dutyCycle * 2.0f * PI;
-
-    for (float n = 1; n < harmonics; n++) {
-        float c = n * frequency * 2.0f * PI * globalTime;
-        a += fastSin(c) / n;
-        b += fastSin(c - p * n) / n;
-    }
-
-    return 2.0f / PI * (a - b);
 }
