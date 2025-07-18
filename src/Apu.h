@@ -28,6 +28,7 @@ private:
     int cycleCount;
 
     PulseChannel pulse_channel_1;
+    PulseChannel pulse_channel_2;
 
     int frameCounterCycle;
     nesByte frameCounterMode;

@@ -50,6 +50,7 @@ void Apu::reset() {
     cycleCount = 0;
 
     pulse_channel_1.reset();
+    pulse_channel_2.reset();
 
     frameCounterCycle = 0;
     frameCounterMode = 0;
@@ -80,10 +81,12 @@ void Apu::clockTick() {
 
         if (onQuarterFrame) {
             pulse_channel_1.clock_quarter_frame();
+            pulse_channel_2.clock_quarter_frame();
         }
 
         if (onHalfFrame) {
             pulse_channel_1.clock_half_frame();
+            pulse_channel_2.clock_half_frame();
         }
 
         frameCounterCycle++;
@@ -93,8 +96,8 @@ void Apu::clockTick() {
 }
 
 float Apu::getAudioSampleOutput() {
-    //TODO IMPLEMENT CHANNEL MIXING
-    return pulse_channel_1.sample(globalTime);
+    //TODO IMPLEMENT ACTUAL CHANNEL MIXING
+    return (pulse_channel_1.sample(globalTime) + pulse_channel_2.sample(globalTime)) / 2.0f;
 }
 
 nesByte Apu::cpuRead(nesWord address, bool onlyRead) {
@@ -150,7 +153,9 @@ void Apu::cpuWrite(nesWord address, nesByte data) {
         // Duty (D), envelope loop / length counter halt (L), constant volume (C), volume/envelope (V)
         // DDLC VVVV
         case 0x4004:
-            //TODO
+            pulse_channel_2.set_duty_cycle(data >> 6);
+            pulse_channel_2.set_length_counter_halted((data & 0x20) != 0);
+            pulse_channel_2.set_envelope_volume_values((data & 0x10) != 0, data & 0x0F);
             break;
 
         // pulse 2
@@ -164,14 +169,16 @@ void Apu::cpuWrite(nesWord address, nesByte data) {
         // Timer low (T)
         // TTTT TTTT
         case 0x4006:
-            //TODO
+            pulse_channel_2.set_timer_lower_byte(data);
             break;
 
         // pulse 2
         // Length counter load (L), timer high (T)
         // LLLL LTTT
         case 0x4007:
-            //TODO
+            pulse_channel_2.set_timer_upper_byte(data & 0x07);
+            pulse_channel_2.set_length_counter(lengthsTable[data >> 3]);
+            pulse_channel_2.restart_envelope();
             break;
 
         // =============== TRIANGLE ===============
@@ -267,6 +274,7 @@ void Apu::cpuWrite(nesWord address, nesByte data) {
         // ---D NT21
         case 0x4015:
             pulse_channel_1.set_enabled((data & 0x01) != 0);
+            pulse_channel_2.set_enabled((data & 0x02) != 0);
             //todo add others here!!!
             break;
 
