@@ -1,8 +1,8 @@
+#include <SDL3/SDL.h>
+#include <iostream>
 #include <string>
 #include <sstream>
 #include <cstdlib>
-#include <SDL3/SDL.h>
-#include <iostream>
 
 #include "TextUtils.h"
 #include "Nes.h"
@@ -21,12 +21,16 @@ private:
     SDL_Texture* screen_texture;
     SDL_FRect target_texture_rect;
 
+    SDL_AudioStream* audio_stream;
+    float audio_buffer[4096];
+
 public:
 
-    Display(std::string filename, SDL_Renderer* renderer, SDL_Texture* screen_texture, const SDL_PixelFormatDetails* pixel_format_details)
+    Display(std::string filename, SDL_Renderer* renderer, SDL_Texture* screen_texture, const SDL_PixelFormatDetails* pixel_format_details, SDL_AudioStream* audio_stream)
     :
     renderer(renderer),
-    screen_texture(screen_texture) {
+    screen_texture(screen_texture),
+    audio_stream(audio_stream) {
 
         cartridge = new Cartridge(filename);
         if (!cartridge->isValid()) {
@@ -64,19 +68,9 @@ public:
         }
     }
 
-    float createAudioSample(int channel, float globalTime, float timestep) {
-        if (channel != 0) {
-            return 0;
-        }
+    bool OnUserUpdate(float delta_time) {
+        const float VOLUME_SCALE = 0.2f;
 
-        while(!nes->clockForAudioSample()) {
-            // do nothing - just wait for the audio sample to be available
-        }
-
-        return nes->getAudioSample();
-    }
-
-    bool OnUserUpdate(float fElapsedTime) {
         updateControllerStates();
 
         if (keyboard_state[SDL_SCANCODE_ESCAPE]) {
@@ -85,8 +79,18 @@ public:
             nes->reset();
         }
 
-        //TODO THIS WILL RUN THE NES FOR NOW, BUT IT'S JUST TEMPORARY!!!
-        nes->processTimeElapsed(fElapsedTime);
+        int audio_samples_to_generate = 44100 * delta_time;
+        if (audio_samples_to_generate <= sizeof(audio_buffer) / sizeof(float)) {
+            for (int i = 0; i < audio_samples_to_generate; i++) {
+                while (!nes->clockForAudioSample()) {
+                    // do nothing - wait for audio sample to be available
+                }
+
+                audio_buffer[i] = VOLUME_SCALE * nes->getAudioSample();
+            }
+
+            SDL_PutAudioStreamData(audio_stream, audio_buffer, audio_samples_to_generate * sizeof(float));
+        }
 
         renderDisplay();
 
@@ -135,10 +139,15 @@ public:
 SDL_Window* window = nullptr;
 SDL_Renderer* renderer = nullptr;
 SDL_Texture* screen_texture = nullptr;
+SDL_AudioStream* audio_stream;
 
 // --------------------------------------------------------------------------
 
 void cleanup() {
+    if (audio_stream != nullptr) {
+        SDL_DestroyAudioStream(audio_stream);
+    }
+
     if (screen_texture != nullptr) {
         SDL_DestroyTexture(screen_texture);
     }
@@ -171,12 +180,12 @@ int main(int argc, char* argv[]) {
     const int NES_SCREEN_WIDTH = 256;
     const int NES_SCREEN_HEIGHT = 240;
 
-    if (!SDL_Init(SDL_INIT_VIDEO)) {
+    if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO)) {
         std::cerr << "SDL_Init Error: " << SDL_GetError() << "\n";
         return 1;
     }
 
-    window = SDL_CreateWindow("Test", NES_SCREEN_WIDTH, NES_SCREEN_HEIGHT, SDL_WINDOW_RESIZABLE);
+    window = SDL_CreateWindow("NES Emulator", NES_SCREEN_WIDTH, NES_SCREEN_HEIGHT, SDL_WINDOW_RESIZABLE | SDL_WINDOW_MAXIMIZED);
     if (window == nullptr) {
         std::cerr << "[ERROR] SDL_CreateWindow error: " << SDL_GetError() << std::endl;
         cleanup();
@@ -208,9 +217,26 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
+    SDL_AudioSpec spec;
+    spec.format = SDL_AUDIO_F32;
+    spec.channels = 1;
+    spec.freq = 44100;
+    audio_stream = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec, nullptr, nullptr);
+    if (audio_stream == nullptr) {
+        std::cerr << "[ERROR] SDL_OpenAudioDeviceStream error:" << SDL_GetError() << std::endl;
+        cleanup();
+        return 1;
+    }
+
+    if (!SDL_ResumeAudioStreamDevice(audio_stream)) {
+        std::cerr << "[ERROR] SDL_ResumeAudioStreamDevice error:" << SDL_GetError() << std::endl;
+        cleanup();
+        return 1;
+    }
+
     // --- main loop setup ---
 
-    Display display(filename, renderer, screen_texture, pixel_format_details);
+    Display display(filename, renderer, screen_texture, pixel_format_details, audio_stream);
 
     Uint64 previous_time_ms = SDL_GetTicks();
 
