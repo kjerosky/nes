@@ -69,6 +69,7 @@ void Apu::clockTick() {
 
         pulse_channel_1.clock_timer();
         pulse_channel_2.clock_timer();
+        noise_channel.clock_timer();
 
         bool onQuarterFrame = false;
         bool onHalfFrame = false;
@@ -89,12 +90,14 @@ void Apu::clockTick() {
             pulse_channel_1.clock_quarter_frame();
             pulse_channel_2.clock_quarter_frame();
             triangle.clock_quarter_frame();
+            noise_channel.clock_quarter_frame();
         }
 
         if (onHalfFrame) {
             pulse_channel_1.clock_half_frame();
             pulse_channel_2.clock_half_frame();
             triangle.clock_half_frame();
+            noise_channel.clock_half_frame();
         }
 
         frameCounterCycle++;
@@ -114,7 +117,7 @@ float Apu::getAudioSampleOutput() {
     }
 
     int tri = triangle.get_output();
-    int noise = 0; //todo
+    int noise = noise_channel.get_output();
     int dmc = 0; //todo
     double tnd_out = 0.0;
     if (tri != 0 || noise != 0 || dmc != 0) {
@@ -253,7 +256,8 @@ void Apu::cpuWrite(nesWord address, nesByte data) {
         // Envelope loop / length counter halt (L), constant volume (C), volume/envelope (V)
         // --LC VVVV
         case 0x400C:
-            //TODO
+            noise_channel.set_length_counter_halted((data & 0x20) != 0);
+            noise_channel.set_envelope_volume_values((data & 0x10) != 0, data & 0x0F);
             break;
 
         // UNUSED
@@ -265,14 +269,15 @@ void Apu::cpuWrite(nesWord address, nesByte data) {
         // Loop noise (L), noise period (P)
         // L--- PPPP
         case 0x400E:
-            //TODO
+            noise_channel.set_mode((data & 0x80) != 0);
+            noise_channel.set_timer_reload_by_index(data & 0x0F);
             break;
 
         // noise
         // Length counter load (L)
         // LLLL L---
         case 0x400F:
-            //TODO
+            noise_channel.set_length_counter(lengthsTable[data >> 3]);
             break;
 
         // =============== DMC ===============
