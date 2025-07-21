@@ -5,6 +5,7 @@
 
 #include "Types.h"
 #include "PulseChannel.h"
+#include "Triangle.h"
 
 class Apu {
 
@@ -28,6 +29,7 @@ private:
 
     PulseChannel pulse_channel_1;
     PulseChannel pulse_channel_2;
+    Triangle triangle;
 
     int frameCounterCycle;
     nesByte frameCounterMode;
