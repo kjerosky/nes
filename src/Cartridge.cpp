@@ -4,6 +4,7 @@
 
 #include "Mapper000.h"
 #include "Mapper002.h"
+#include "Mapper003.h"
 
 Cartridge::Cartridge(std::string filename) {
     struct inesHeader {
@@ -61,6 +62,10 @@ Cartridge::Cartridge(std::string filename) {
 
             case 2:
                 mapper = new Mapper002(programRomBankCount, characterRomBankCount);
+                break;
+
+            case 3:
+                mapper = new Mapper003(programRomBankCount, characterRomBankCount);
                 break;
 
             default:
