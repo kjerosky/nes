@@ -1,5 +1,12 @@
 #include "PulseChannel.h"
 
+const Uint8 PulseChannel::DUTY_TABLE[4][8] = {
+    { 0, 1, 0, 0, 0, 0, 0, 0 },
+    { 0, 1, 1, 0, 0, 0, 0, 0 },
+    { 0, 1, 1, 1, 1, 0, 0, 0 },
+    { 1, 0, 0, 1, 1, 1, 1, 1 },
+};
+
 // --------------------------------------------------------------------------
 
 PulseChannel::PulseChannel(bool is_pulse_2)
@@ -23,6 +30,7 @@ void PulseChannel::reset() {
     length_counter = 0;
     duty_cycle = 0.0f;
     set_length_counter_halted(true);
+    timer_counter = 1;
 
     envelope.set_volume_values(true, 0);
 }
@@ -55,6 +63,7 @@ void PulseChannel::set_enabled(bool is_enabled) {
 
 void PulseChannel::set_timer_upper_byte(Uint8 upper_byte) {
     timer = (static_cast<Uint16>(upper_byte) << 8) | (timer & 0x00FF);
+    duty_cycle_index = 0;
 }
 
 // --------------------------------------------------------------------------
@@ -65,13 +74,8 @@ void PulseChannel::set_timer_lower_byte(Uint8 lower_byte) {
 
 // --------------------------------------------------------------------------
 
-void PulseChannel::set_duty_cycle(Uint8 right_shifted_duty_cycle_bits) {
-    switch (right_shifted_duty_cycle_bits) {
-        case 0x00: duty_cycle = 0.125f; break;
-        case 0x01: duty_cycle = 0.250f; break;
-        case 0x02: duty_cycle = 0.500f; break;
-        case 0x03: duty_cycle = 0.750f; break;
-    }
+void PulseChannel::set_duty_cycle(Uint8 duty_cycle) {
+    this->duty_cycle = duty_cycle;
 }
 
 // --------------------------------------------------------------------------
@@ -109,35 +113,28 @@ void PulseChannel::restart_envelope() {
 
 // --------------------------------------------------------------------------
 
-float PulseChannel::sample(double global_time) {
-    float output = 0.0f;
-
-    if (is_enabled && length_counter > 0 && timer >= 8) {
-        float a = 0;
-        float b = 0;
-
-        int harmonics = 20;
-        double frequency = 1789773.0 / (16 * (double)(timer + 1));
-        float p = duty_cycle * 2.0f * SDL_PI_F;
-
-        for (float n = 1; n < harmonics; n++) {
-            float c = n * frequency * 2.0f * SDL_PI_F * global_time;
-            a += fast_sin(c) / n;
-            b += fast_sin(c - p * n) / n;
-        }
-
-        output = 2.0f / SDL_PI_F * (a - b);
+int PulseChannel::get_output() {
+    int output;
+    if (length_counter == 0) {
+        output = 0;
+    } else if (sweep.is_muted()) {
+        output = 0;
+    } else if (timer < 8) {
+        output = 0;
+    } else {
+        output = DUTY_TABLE[duty_cycle][duty_cycle_index];
     }
 
-    float volume_scale = envelope.get_volume() / 16.0f;
-
-    return output * volume_scale;
+    return output * envelope.get_volume();
 }
 
 // --------------------------------------------------------------------------
 
-float PulseChannel::fast_sin(float value) {
-    float j = value * 0.15915;
-    j = j - (int)j;
-    return 20.785 * j * (j - 0.5) * (j - 1.0f);
+void PulseChannel::clock_timer() {
+    if (timer_counter == 0) {
+        timer_counter = timer;
+        duty_cycle_index = (duty_cycle_index + 1) % 8;
+    } else {
+        timer_counter--;
+    }
 }

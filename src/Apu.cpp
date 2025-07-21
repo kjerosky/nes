@@ -50,7 +50,6 @@ Apu::~Apu() {
 }
 
 void Apu::reset() {
-    globalTime = 0;
     cycleCount = 0;
 
     pulse_channel_1.reset();
@@ -61,12 +60,11 @@ void Apu::reset() {
 }
 
 void Apu::clockTick() {
-    // In this implementation, we're clocking the apu at the same rate as the ppu,
-    // so we track time passing according to the ppu clock cycle time.
-    globalTime += 1.0 / 5369318;
-
     if (cycleCount % 6 == 0) {
         cycleCount = 0;
+
+        pulse_channel_1.clock_timer();
+        pulse_channel_2.clock_timer();
 
         bool onQuarterFrame = false;
         bool onHalfFrame = false;
@@ -100,8 +98,24 @@ void Apu::clockTick() {
 }
 
 float Apu::getAudioSampleOutput() {
-    //TODO IMPLEMENT ACTUAL CHANNEL MIXING
-    return (pulse_channel_1.sample(globalTime) + pulse_channel_2.sample(globalTime)) / 2.0f;
+    // Here, we'll perform audio mixing according to blargg's formulas.
+
+    int pulse1 = pulse_channel_1.get_output();
+    int pulse2 = pulse_channel_2.get_output();
+    double pulse_out = 0.0;
+    if (pulse1 != 0 || pulse2 != 0) {
+        pulse_out = 95.88 / ((8128.0 / (pulse1 + pulse2)) + 100);
+    }
+
+    int triangle = 0; //todo
+    int noise = 0; //todo
+    int dmc = 0; //todo
+    double tnd_out = 0.0;
+    if (triangle != 0 || noise != 0 || dmc != 0) {
+        tnd_out = 159.79 / (1.0 / (triangle / 8227.0 + noise / 12241.0 + dmc / 22638.0) + 100);
+    }
+
+    return (pulse_out + tnd_out);
 }
 
 nesByte Apu::cpuRead(nesWord address, bool onlyRead) {
@@ -126,6 +140,7 @@ void Apu::cpuWrite(nesWord address, nesByte data) {
             pulse_channel_1.set_duty_cycle(data >> 6);
             pulse_channel_1.set_length_counter_halted((data & 0x20) != 0);
             pulse_channel_1.set_envelope_volume_values((data & 0x10) != 0, data & 0x0F);
+            pulse_channel_1.restart_envelope();
             break;
 
         // pulse 1
@@ -165,6 +180,7 @@ void Apu::cpuWrite(nesWord address, nesByte data) {
             pulse_channel_2.set_duty_cycle(data >> 6);
             pulse_channel_2.set_length_counter_halted((data & 0x20) != 0);
             pulse_channel_2.set_envelope_volume_values((data & 0x10) != 0, data & 0x0F);
+            pulse_channel_2.restart_envelope();
             break;
 
         // pulse 2

@@ -10,7 +10,8 @@ divider_period(0),
 is_negated(false),
 shift(0),
 reload(false),
-divider_counter(0) {
+divider_counter(0),
+muted(true) {
 
     // nothing to do for now
 }
@@ -40,36 +41,48 @@ void Sweep::clock(Uint16& timer) {
     Uint16 target_timer;
     if (is_negated) {
         if (is_for_pulse_2) {
-            target_timer = timer - change - 1;
+            if (change > timer) {
+                target_timer = 0;
+            } else {
+                target_timer = timer - change;
+            }
         } else {
-            target_timer = timer - change;
+            if (change + 1 > timer) {
+                target_timer = 0;
+            } else {
+                target_timer = timer - change - 1;
+            }
         }
     } else {
         target_timer = timer + change;
     }
 
-    bool is_muted;
-    if (target_timer < 8 || target_timer > 0x07FF) {
-        is_muted = true;
+    if (target_timer > 0x07FF) {
+        muted = true;
     } else {
-        is_muted = false;
+        muted = false;
     }
 
     if (reload) {
-        divider_counter = divider_period + 1;
+        divider_counter = divider_period;
         reload = false;
         return;
     }
 
-    if (divider_counter > 0) {
+    if (divider_counter == 0) {
+        divider_counter = divider_period;
+
+        if (is_enabled && shift > 0 && !muted) {
+            timer = target_timer;
+        }
+    } else {
         divider_counter--;
     }
 
-    if (divider_counter == 0) {
-        divider_counter = divider_period + 1;
+}
 
-        if (is_enabled && shift > 0 && !is_muted) {
-            timer = target_timer;
-        }
-    }
+// --------------------------------------------------------------------------
+
+bool Sweep::is_muted() {
+    return muted;
 }

@@ -24,7 +24,6 @@ private:
 
     std::vector<nesByte> lengthsTable;
 
-    double globalTime;
     int cycleCount;
 
     PulseChannel pulse_channel_1;

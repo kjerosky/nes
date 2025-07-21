@@ -12,6 +12,7 @@ public:
 
     void set_values(bool is_enabled, Uint8 divider_period, bool is_negated, Uint8 shift);
     void clock(Uint16& timer);
+    bool is_muted();
 
 private:
 
@@ -23,6 +24,7 @@ private:
 
     bool reload;
     Uint8 divider_counter;
+    bool muted;
 };
 
 #endif

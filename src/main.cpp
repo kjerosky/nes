@@ -22,7 +22,7 @@ private:
     SDL_FRect target_texture_rect;
 
     SDL_AudioStream* audio_stream;
-    float audio_buffer[4096];
+    float audio_buffer[65536];
 
 public:
 
@@ -69,8 +69,6 @@ public:
     }
 
     bool OnUserUpdate(float delta_time) {
-        const float VOLUME_SCALE = 0.2f;
-
         updateControllerStates();
 
         if (keyboard_state[SDL_SCANCODE_ESCAPE]) {
@@ -86,7 +84,7 @@ public:
                     // do nothing - wait for audio sample to be available
                 }
 
-                audio_buffer[i] = VOLUME_SCALE * nes->getAudioSample();
+                audio_buffer[i] = nes->getAudioSample();
             }
 
             SDL_PutAudioStreamData(audio_stream, audio_buffer, audio_samples_to_generate * sizeof(float));

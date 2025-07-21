@@ -41,7 +41,6 @@ void Envelope::clock() {
         divider_counter = divider_period;
         start = false;
     } else {
-        divider_counter--;
         if (divider_counter == 0) {
             divider_counter = divider_period;
             if (decay_counter > 0) {
@@ -49,6 +48,8 @@ void Envelope::clock() {
             } else if (is_looping) {
                 decay_counter = 15;
             }
+        } else {
+            divider_counter--;
         }
     }
 
