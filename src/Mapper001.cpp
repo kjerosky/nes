@@ -103,19 +103,13 @@ bool Mapper001::mapPpuRead(Uint16 requestedAddress, unsigned int& mappedAddress)
 // --------------------------------------------------------------------------
 
 bool Mapper001::mapPpuWrite(Uint16 requestedAddress, unsigned int& mappedAddress) {
-    if (control_register.chr_rom_bank_size == 0) {
-        // 8kb banks
-        mappedAddress = (chr_bank_0 & 0x1E) * 4096 + (requestedAddress & 0x1FFF);
-    } else {
-        // 4kb banks
-        if (requestedAddress >= 0x0000 && requestedAddress <= 0x0FFF) {
-            mappedAddress = (chr_bank_0 & 0x1F) * 4096 + (requestedAddress & 0x0FFF);
-        } else {
-            mappedAddress = (chr_bank_1 & 0x1F) * 4096 + (requestedAddress & 0x0FFF);
-        }
+    // No chr-rom means there's chr-ram, so we'll allow writes for that.
+    if (characterRomBankCount == 0) {
+        mappedAddress = requestedAddress & 0x1FFF;
+        return true;
     }
 
-    return true;
+    return false;
 }
 
 // --------------------------------------------------------------------------
