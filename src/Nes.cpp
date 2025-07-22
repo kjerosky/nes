@@ -117,6 +117,8 @@ void Nes::reset() {
     while (!cpu->isCurrentInstructionComplete()) {
         clockTick();
     }
+
+    bus->reset();
 }
 
 void Nes::irq() {
@@ -174,6 +176,8 @@ void Nes::clockTick() {
     }
 
     cycleCounter++;
+
+    bus->execute_periodic_actions();
 }
 
 void Nes::updateControllerStates(Uint8 controller1State, Uint8 controller2State) {

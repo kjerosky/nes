@@ -24,6 +24,8 @@ public:
     void updateControllerStates(Uint8 controller1State, Uint8 controller2State);
 
     bool checkDmaProgress();
+    void reset();
+    void execute_periodic_actions();
 
 private:
 

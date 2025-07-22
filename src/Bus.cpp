@@ -80,3 +80,11 @@ bool Bus::checkDmaProgress() {
     dmaReadyToWriteData = !dmaReadyToWriteData;
     return true;
 }
+
+void Bus::reset() {
+    save_ram.reset();
+}
+
+void Bus::execute_periodic_actions() {
+    save_ram.execute_periodic_actions();
+}

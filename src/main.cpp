@@ -3,6 +3,7 @@
 #include <string>
 #include <sstream>
 #include <cstdlib>
+#include <filesystem>
 
 #include "TextUtils.h"
 #include "Nes.h"
@@ -139,6 +140,26 @@ SDL_Renderer* renderer = nullptr;
 SDL_Texture* screen_texture = nullptr;
 SDL_AudioStream* audio_stream;
 
+// I know that this being global isn't the best decision, but it's such a
+// pain to pass it all the way down to the actual SaveRam instance. 🤷🏻‍♂️
+std::string sram_file_name;
+
+// --------------------------------------------------------------------------
+
+void setup_sram_file_name(const std::string& rom_file_name) {
+    std::filesystem::path path(rom_file_name);
+
+    if (path.has_parent_path()) {
+        sram_file_name = path.parent_path();
+        sram_file_name += "/";
+        sram_file_name += path.stem();
+        sram_file_name += ".sram";
+    } else {
+        sram_file_name = path.stem();
+        sram_file_name += ".sram";
+    }
+}
+
 // --------------------------------------------------------------------------
 
 void cleanup() {
@@ -172,6 +193,7 @@ int main(int argc, char* argv[]) {
     }
 
     std::string filename = argv[1];
+    setup_sram_file_name(filename);
 
     // --- sdl3 setup ---
 
