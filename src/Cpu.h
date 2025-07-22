@@ -4,18 +4,19 @@
 #include <string>
 #include <map>
 #include <vector>
-#include "Types.h"
+#include <SDL3/SDL.h>
+
 #include "Bus.h"
 
 class Cpu;
 
 typedef struct {
-    nesByte a;
-    nesByte x;
-    nesByte y;
-    nesByte sp;
-    nesByte status;
-    nesWord pc;
+    Uint8 a;
+    Uint8 x;
+    Uint8 y;
+    Uint8 sp;
+    Uint8 status;
+    Uint16 pc;
 
     bool nFlag;
     bool vFlag;
@@ -44,38 +45,38 @@ public:
     void nmi();
     void clockTick();
     bool isCurrentInstructionComplete();
-    std::map<nesWord, std::string> disassemble(nesWord lowerAddress, nesWord upperAddress);
+    std::map<Uint16, std::string> disassemble(Uint16 lowerAddress, Uint16 upperAddress);
     CpuInfo getInfo();
 
 private:
 
-    static const nesByte N_FLAG = 1 << 7;
-    static const nesByte V_FLAG = 1 << 6;
-    static const nesByte U_FLAG = 1 << 5;
-    static const nesByte B_FLAG = 1 << 4;
-    static const nesByte D_FLAG = 1 << 3;
-    static const nesByte I_FLAG = 1 << 2;
-    static const nesByte Z_FLAG = 1 << 1;
-    static const nesByte C_FLAG = 1 << 0;
+    static const Uint8 N_FLAG = 1 << 7;
+    static const Uint8 V_FLAG = 1 << 6;
+    static const Uint8 U_FLAG = 1 << 5;
+    static const Uint8 B_FLAG = 1 << 4;
+    static const Uint8 D_FLAG = 1 << 3;
+    static const Uint8 I_FLAG = 1 << 2;
+    static const Uint8 Z_FLAG = 1 << 1;
+    static const Uint8 C_FLAG = 1 << 0;
 
     Bus* bus;
 
-    nesByte a;
-    nesByte x;
-    nesByte y;
-    nesByte sp;
-    nesByte status;
-    nesWord pc;
+    Uint8 a;
+    Uint8 x;
+    Uint8 y;
+    Uint8 sp;
+    Uint8 status;
+    Uint16 pc;
 
     Instruction opcode;
     int cyclesRemaining;
 
-    nesByte getStatusFlag(nesByte flag);
-    void setStatusFlag(nesByte flag, bool value);
+    Uint8 getStatusFlag(Uint8 flag);
+    void setStatusFlag(Uint8 flag, bool value);
 
-    nesByte fetchedByte;
-    nesWord absoluteAddress;
-    nesWord relativeAddress;
+    Uint8 fetchedByte;
+    Uint16 absoluteAddress;
+    Uint16 relativeAddress;
 
     bool (Cpu::*addressMode)(void);
     void fetch();

@@ -138,12 +138,12 @@ void Ppu::reset() {
     spriteZeroIsBeingRendered = false;
 }
 
-nesByte* Ppu::getNameTable(int nameTableIndex) {
+Uint8* Ppu::getNameTable(int nameTableIndex) {
     return nameTables[nameTableIndex];
 }
 
-nesByte Ppu::cpuRead(nesWord address, bool onlyRead) {
-    nesByte data = 0x00;
+Uint8 Ppu::cpuRead(Uint16 address, bool onlyRead) {
+    Uint8 data = 0x00;
 
     switch (address) {
         // PPUCTRL
@@ -192,7 +192,7 @@ nesByte Ppu::cpuRead(nesWord address, bool onlyRead) {
 
         // PPUDATA
         case 0x0007:
-            nesWord currentPpuAddress = vRamAddress.getAsWord();
+            Uint16 currentPpuAddress = vRamAddress.getAsWord();
             data = ppuDataBuffer;
             ppuDataBuffer = readViaPpuBus(currentPpuAddress, onlyRead);
 
@@ -208,7 +208,7 @@ nesByte Ppu::cpuRead(nesWord address, bool onlyRead) {
     return data;
 }
 
-void Ppu::cpuWrite(nesWord address, nesByte data) {
+void Ppu::cpuWrite(Uint16 address, Uint8 data) {
     switch (address) {
         // PPUCTRL
         case 0x0000:
@@ -272,8 +272,8 @@ void Ppu::cpuWrite(nesWord address, nesByte data) {
     }
 }
 
-nesByte Ppu::readViaPpuBus(nesWord address, bool onlyRead) {
-    nesByte data = 0x00;
+Uint8 Ppu::readViaPpuBus(Uint16 address, bool onlyRead) {
+    Uint8 data = 0x00;
 
     address &= 0x3FFF;
     if (address >= 0x0000 && address <= 0x1FFF) {
@@ -311,7 +311,7 @@ nesByte Ppu::readViaPpuBus(nesWord address, bool onlyRead) {
     return data;
 }
 
-void Ppu::writeViaPpuBus(nesWord address, nesByte data) {
+void Ppu::writeViaPpuBus(Uint16 address, Uint8 data) {
     address &= 0x3FFF;
     if (address >= 0x0000 && address <= 0x1FFF) {
         cartridge->ppuWrite(address, data);
@@ -395,7 +395,7 @@ void Ppu::clockTick() {
                 case 5:
                     nextBackgroundLsbpByte = readViaPpuBus(
                         (ppuCtrlRegister.patternBackground ? 0x1000 : 0x0000) +
-                        (((nesWord)nextBackgroundNameTableByte) << 4) +
+                        (((Uint16)nextBackgroundNameTableByte) << 4) +
                         vRamAddress.fineY
                     );
                     break;
@@ -403,7 +403,7 @@ void Ppu::clockTick() {
                 case 7:
                     nextBackgroundMsbpByte = readViaPpuBus(
                         (ppuCtrlRegister.patternBackground ? 0x1000 : 0x0000) +
-                        (((nesWord)nextBackgroundNameTableByte) << 4) +
+                        (((Uint16)nextBackgroundNameTableByte) << 4) +
                         vRamAddress.fineY + 0x08
                     );
 
@@ -440,7 +440,7 @@ void Ppu::clockTick() {
             int backgroundPaletteIndex = 0;
             int backgroundPaletteColorIndex = 0;
             if (ppuMaskRegister.renderBackground && (ppuMaskRegister.renderBackgroundLeft || cycle > 8)) {
-                nesWord bitMask = 0x8000 >> fineX;
+                Uint16 bitMask = 0x8000 >> fineX;
                 backgroundPaletteIndex =
                     (backgroundAttributeMsbShiftRegister & bitMask ? 0x02 : 0x00) |
                     (backgroundAttributeLsbShiftRegister & bitMask ? 0x01 : 0x00);
@@ -603,11 +603,11 @@ void Ppu::updateShiftRegisters() {
     }
 }
 
-void Ppu::writeToOam(nesByte address, nesByte data) {
+void Ppu::writeToOam(Uint8 address, Uint8 data) {
     oamBytes[address] = data;
 }
 
-nesByte* Ppu::getOamBytes() {
+Uint8* Ppu::getOamBytes() {
     return oamBytes;
 }
 
@@ -642,8 +642,8 @@ void Ppu::loadSpriteShiftRegisters() {
         bool shouldFlipVertically = sprite->attributes & 0x80;
         bool shouldFlipHorizontally = sprite->attributes & 0x40;
 
-        nesWord spriteLsbpByteAddress;
-        nesWord spriteMsbpByteAddress;
+        Uint16 spriteLsbpByteAddress;
+        Uint16 spriteMsbpByteAddress;
 
         if (ppuCtrlRegister.spriteSize) {
             // 8 x 16 sprites
@@ -679,7 +679,7 @@ void Ppu::loadSpriteShiftRegisters() {
             }
         } else {
             // 8 x 8 sprites
-            nesWord row = scanline - sprite->y;
+            Uint16 row = scanline - sprite->y;
             if (shouldFlipVertically) {
                 row = 7 - row;
             }
@@ -693,8 +693,8 @@ void Ppu::loadSpriteShiftRegisters() {
 
         spriteMsbpByteAddress = spriteLsbpByteAddress + 8;
 
-        nesByte spriteLsbpByte = readViaPpuBus(spriteLsbpByteAddress);
-        nesByte spriteMsbpByte = readViaPpuBus(spriteMsbpByteAddress);
+        Uint8 spriteLsbpByte = readViaPpuBus(spriteLsbpByteAddress);
+        Uint8 spriteMsbpByte = readViaPpuBus(spriteMsbpByteAddress);
         if (shouldFlipHorizontally) {
             // https://stackoverflow.com/a/2602885
 

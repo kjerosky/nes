@@ -24,7 +24,7 @@ Nes::~Nes() {
     delete apu;
 }
 
-std::map<nesWord, std::string> Nes::disassemble(nesWord lowerAddress, nesWord upperAddress) {
+std::map<Uint16, std::string> Nes::disassemble(Uint16 lowerAddress, Uint16 upperAddress) {
     return cpu->disassemble(lowerAddress, upperAddress);
 }
 
@@ -98,11 +98,11 @@ CpuInfo Nes::getCpuInfo() {
     return cpu->getInfo();
 }
 
-nesByte* Nes::getCpuRam() {
+Uint8* Nes::getCpuRam() {
     return bus->ram;
 }
 
-nesByte* Nes::getNameTable(int nameTableIndex) {
+Uint8* Nes::getNameTable(int nameTableIndex) {
     return ppu->getNameTable(nameTableIndex);
 }
 
@@ -176,10 +176,10 @@ void Nes::clockTick() {
     cycleCounter++;
 }
 
-void Nes::updateControllerStates(nesByte controller1State, nesByte controller2State) {
+void Nes::updateControllerStates(Uint8 controller1State, Uint8 controller2State) {
     bus->updateControllerStates(controller1State, controller2State);
 }
 
-nesByte* Nes::getOamBytes() {
+Uint8* Nes::getOamBytes() {
     return ppu->getOamBytes();
 }

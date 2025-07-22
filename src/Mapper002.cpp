@@ -14,7 +14,7 @@ void Mapper002::reset() {
     fixedBankIndex = programRomBankCount - 1;
 }
 
-bool Mapper002::mapCpuRead(nesWord requestedAddress, unsigned int& mappedAddress) {
+bool Mapper002::mapCpuRead(Uint16 requestedAddress, unsigned int& mappedAddress) {
     if (requestedAddress >= 0x8000 && requestedAddress < 0xBFFF) {
         mappedAddress = 0x4000 * switchableBankIndex + (requestedAddress & 0x3FFF);
     } else {
@@ -24,18 +24,18 @@ bool Mapper002::mapCpuRead(nesWord requestedAddress, unsigned int& mappedAddress
     return true;
 }
 
-bool Mapper002::mapCpuWrite(nesWord requestedAddress, unsigned int& mappedAddress, nesByte data) {
+bool Mapper002::mapCpuWrite(Uint16 requestedAddress, unsigned int& mappedAddress, Uint8 data) {
     switchableBankIndex = data;
     return false;
 }
 
-bool Mapper002::mapPpuRead(nesWord requestedAddress, unsigned int& mappedAddress) {
+bool Mapper002::mapPpuRead(Uint16 requestedAddress, unsigned int& mappedAddress) {
     // no mapping necessary
     mappedAddress = requestedAddress;
     return true;
 }
 
-bool Mapper002::mapPpuWrite(nesWord requestedAddress, unsigned int& mappedAddress) {
+bool Mapper002::mapPpuWrite(Uint16 requestedAddress, unsigned int& mappedAddress) {
     // If the CHR-ROM is actually CHR-RAM, we'll allow writes to it.
     if (characterRomBankCount == 0) {
         mappedAddress = requestedAddress;

@@ -8,7 +8,7 @@ Apu::Apu()
 pulse_channel_1(false),
 pulse_channel_2(true) {
 
-    lengthsTable = std::vector<nesByte>(0x20);
+    lengthsTable = std::vector<Uint8>(0x20);
     lengthsTable[0x00] = 10;
     lengthsTable[0x01] = 254;
     lengthsTable[0x02] = 20;
@@ -61,7 +61,7 @@ void Apu::reset() {
 
 void Apu::clockTick() {
     if (cycleCount % 3 == 0) {
-        triangle.clock_timer();
+        triangle_channel.clock_timer();
     }
 
     if (cycleCount % 6 == 0) {
@@ -89,14 +89,14 @@ void Apu::clockTick() {
         if (onQuarterFrame) {
             pulse_channel_1.clock_quarter_frame();
             pulse_channel_2.clock_quarter_frame();
-            triangle.clock_quarter_frame();
+            triangle_channel.clock_quarter_frame();
             noise_channel.clock_quarter_frame();
         }
 
         if (onHalfFrame) {
             pulse_channel_1.clock_half_frame();
             pulse_channel_2.clock_half_frame();
-            triangle.clock_half_frame();
+            triangle_channel.clock_half_frame();
             noise_channel.clock_half_frame();
         }
 
@@ -116,7 +116,7 @@ float Apu::getAudioSampleOutput() {
         pulse_out = 95.88 / ((8128.0 / (pulse1 + pulse2)) + 100);
     }
 
-    int tri = triangle.get_output();
+    int tri = triangle_channel.get_output();
     int noise = noise_channel.get_output();
     int dmc = 0; //todo
     double tnd_out = 0.0;
@@ -127,8 +127,8 @@ float Apu::getAudioSampleOutput() {
     return (pulse_out + tnd_out);
 }
 
-nesByte Apu::cpuRead(nesWord address, bool onlyRead) {
-    nesByte value = 0x00;
+Uint8 Apu::cpuRead(Uint16 address, bool onlyRead) {
+    Uint8 value = 0x00;
 
     if (address == 0x4015) {
         //TODO IMPLEMENT THIS
@@ -137,7 +137,7 @@ nesByte Apu::cpuRead(nesWord address, bool onlyRead) {
     return value;
 }
 
-void Apu::cpuWrite(nesWord address, nesByte data) {
+void Apu::cpuWrite(Uint16 address, Uint8 data) {
     switch (address) {
 
         // =============== PULSE 1 ===============
@@ -226,8 +226,8 @@ void Apu::cpuWrite(nesWord address, nesByte data) {
         // Length counter halt / linear counter control (C), linear counter load (R)
         // CRRR RRRR
         case 0x4008:
-            triangle.set_control((data & 0x80) != 0);
-            triangle.set_linear_counter_reload(data & 0x7F);
+            triangle_channel.set_control((data & 0x80) != 0);
+            triangle_channel.set_linear_counter_reload(data & 0x7F);
             break;
 
         // UNUSED
@@ -239,15 +239,15 @@ void Apu::cpuWrite(nesWord address, nesByte data) {
         // Timer low (T)
         // TTTT TTTT
         case 0x400A:
-            triangle.set_timer_reload_low_byte(data);
+            triangle_channel.set_timer_reload_low_byte(data);
             break;
 
         // triangle
         // Length counter load (L), timer high (T)
         // LLLL LTTT
         case 0x400B:
-            triangle.set_timer_reload_high_byte(data & 0x07);
-            triangle.set_length_counter(lengthsTable[data >> 3]);
+            triangle_channel.set_timer_reload_high_byte(data & 0x07);
+            triangle_channel.set_length_counter(lengthsTable[data >> 3]);
             break;
 
         // =============== NOISE ===============
@@ -320,7 +320,7 @@ void Apu::cpuWrite(nesWord address, nesByte data) {
             pulse_channel_2.set_enabled((data & 0x02) != 0);
 
             if ((data & 0x04) == 0) {
-                triangle.set_length_counter(0);
+                triangle_channel.set_length_counter(0);
             }
 
             //todo add others here!!!

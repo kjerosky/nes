@@ -3,8 +3,8 @@
 
 #include <sstream>
 #include <map>
+#include <SDL3/SDL.h>
 
-#include "Types.h"
 #include "Cpu.h"
 #include "Ppu.h"
 #include "Bus.h"
@@ -28,14 +28,14 @@ public:
     Nes(Cartridge* cartridge, SDL_Texture* screen_texture, const SDL_PixelFormatDetails* pixel_format_details);
     ~Nes();
 
-    std::map<nesWord, std::string> disassemble(nesWord lowerAddress, nesWord upperAddress);
+    std::map<Uint16, std::string> disassemble(Uint16 lowerAddress, Uint16 upperAddress);
     void executeNextInstruction();
     void displayNextFrame();
     void toggleContinuousExecution();
     void processTimeElapsed(float secondsElapsed);
     CpuInfo getCpuInfo();
-    nesByte* getCpuRam();
-    nesByte* getNameTable(int nameTableIndex);
+    Uint8* getCpuRam();
+    Uint8* getNameTable(int nameTableIndex);
 
     void setAudioSampleRate(int sampleRate);
     float getAudioSample();
@@ -45,9 +45,9 @@ public:
     void irq();
     void nmi();
 
-    void updateControllerStates(nesByte controller1State, nesByte controller2State);
+    void updateControllerStates(Uint8 controller1State, Uint8 controller2State);
 
-    nesByte* getOamBytes();
+    Uint8* getOamBytes();
 
 private:
 

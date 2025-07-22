@@ -1,13 +1,13 @@
-#include "Triangle.h"
+#include "TriangleChannel.h"
 
-const int Triangle::WAVEFORM_VALUES[32] = {
+const int TriangleChannel::WAVEFORM_VALUES[32] = {
     15, 14, 13, 12, 11, 10,  9,  8,  7,  6,  5,  4,  3,  2,  1,  0,
     0,  1,  2,  3,  4,  5,   6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
 };
 
 // --------------------------------------------------------------------------
 
-Triangle::Triangle()
+TriangleChannel::TriangleChannel()
 :
 control(false),
 linear_counter_reload(0),
@@ -23,44 +23,44 @@ linear_counter(0) {
 
 // --------------------------------------------------------------------------
 
-Triangle::~Triangle() {
+TriangleChannel::~TriangleChannel() {
     // nothing to do for now
 }
 
 // --------------------------------------------------------------------------
 
-void Triangle::set_control(bool value) {
+void TriangleChannel::set_control(bool value) {
     control = value;
 }
 
 // --------------------------------------------------------------------------
 
-void Triangle::set_linear_counter_reload(Uint8 value) {
+void TriangleChannel::set_linear_counter_reload(Uint8 value) {
     linear_counter_reload = value;
 }
 
 // --------------------------------------------------------------------------
 
-void Triangle::set_timer_reload_low_byte(Uint8 value) {
+void TriangleChannel::set_timer_reload_low_byte(Uint8 value) {
     timer_reload = (timer_reload & 0xFF00) | value;
 }
 
 // --------------------------------------------------------------------------
 
-void Triangle::set_timer_reload_high_byte(Uint8 value) {
+void TriangleChannel::set_timer_reload_high_byte(Uint8 value) {
     timer_reload = (timer_reload & 0x00FF) | (value << 8);
     should_reload_linear_counter = true;
 }
 
 // --------------------------------------------------------------------------
 
-void Triangle::set_length_counter(Uint8 value) {
+void TriangleChannel::set_length_counter(Uint8 value) {
     length_counter = value;
 }
 
 // --------------------------------------------------------------------------
 
-void Triangle::clock_timer() {
+void TriangleChannel::clock_timer() {
     if (timer == 0) {
         timer = timer_reload;
         waveform_index = (waveform_index + 1) % 32;
@@ -71,7 +71,7 @@ void Triangle::clock_timer() {
 
 // --------------------------------------------------------------------------
 
-void Triangle::clock_quarter_frame() {
+void TriangleChannel::clock_quarter_frame() {
     if (should_reload_linear_counter) {
         linear_counter = linear_counter_reload;
     } else if (linear_counter > 0) {
@@ -85,7 +85,7 @@ void Triangle::clock_quarter_frame() {
 
 // --------------------------------------------------------------------------
 
-void Triangle::clock_half_frame() {
+void TriangleChannel::clock_half_frame() {
     if (!control && length_counter > 0) {
         length_counter--;
     }
@@ -93,7 +93,7 @@ void Triangle::clock_half_frame() {
 
 // --------------------------------------------------------------------------
 
-int Triangle::get_output() {
+int TriangleChannel::get_output() {
     int output = 0;
 
     if (linear_counter > 0 && length_counter > 0) {

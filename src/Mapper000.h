@@ -1,8 +1,9 @@
 #ifndef MAPPER000_H
 #define MAPPER000_H
 
+#include <SDL3/SDL.h>
+
 #include "Mapper.h"
-#include "Types.h"
 
 class Mapper000 : public Mapper {
 
@@ -11,10 +12,10 @@ public:
     Mapper000(unsigned char programRomBankCount, unsigned char characterRomBankCount);
     ~Mapper000();
 
-    bool mapCpuRead(nesWord requestedAddress, unsigned int& mappedAddress) override;
-    bool mapCpuWrite(nesWord requestedAddress, unsigned int& mappedAddress, nesByte data) override;
-    bool mapPpuRead(nesWord requestedAddress, unsigned int& mappedAddress) override;
-    bool mapPpuWrite(nesWord requestedAddress, unsigned int& mappedAddress) override;
+    bool mapCpuRead(Uint16 requestedAddress, unsigned int& mappedAddress) override;
+    bool mapCpuWrite(Uint16 requestedAddress, unsigned int& mappedAddress, Uint8 data) override;
+    bool mapPpuRead(Uint16 requestedAddress, unsigned int& mappedAddress) override;
+    bool mapPpuWrite(Uint16 requestedAddress, unsigned int& mappedAddress) override;
 };
 
 #endif

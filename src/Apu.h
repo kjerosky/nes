@@ -3,9 +3,8 @@
 
 #include <vector>
 
-#include "Types.h"
 #include "PulseChannel.h"
-#include "Triangle.h"
+#include "TriangleChannel.h"
 #include "NoiseChannel.h"
 
 class Apu {
@@ -19,22 +18,22 @@ public:
     void clockTick();
     float getAudioSampleOutput();
 
-    nesByte cpuRead(nesWord address, bool onlyRead = false);
-    void cpuWrite(nesWord address, nesByte data);
+    Uint8 cpuRead(Uint16 address, bool onlyRead = false);
+    void cpuWrite(Uint16 address, Uint8 data);
 
 private:
 
-    std::vector<nesByte> lengthsTable;
+    std::vector<Uint8> lengthsTable;
 
     int cycleCount;
 
     PulseChannel pulse_channel_1;
     PulseChannel pulse_channel_2;
-    Triangle triangle;
+    TriangleChannel triangle_channel;
     NoiseChannel noise_channel;
 
     int frameCounterCycle;
-    nesByte frameCounterMode;
+    Uint8 frameCounterMode;
 };
 
 #endif

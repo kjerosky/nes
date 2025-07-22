@@ -97,7 +97,7 @@ void Cartridge::reset() {
     }
 }
 
-nesByte Cartridge::cpuRead(nesWord address) {
+Uint8 Cartridge::cpuRead(Uint16 address) {
     unsigned int mappedAddress;
     if (mapper->mapCpuRead(address, mappedAddress)) {
         return programRomData[mappedAddress];
@@ -106,14 +106,14 @@ nesByte Cartridge::cpuRead(nesWord address) {
     return 0x00;
 }
 
-void Cartridge::cpuWrite(nesWord address, nesByte data) {
+void Cartridge::cpuWrite(Uint16 address, Uint8 data) {
     unsigned int mappedAddress;
     if (mapper->mapCpuWrite(address, mappedAddress, data)) {
         programRomData[mappedAddress] = data;
     }
 }
 
-nesByte Cartridge::ppuRead(nesWord address) {
+Uint8 Cartridge::ppuRead(Uint16 address) {
     unsigned int mappedAddress;
     if (mapper->mapPpuRead(address, mappedAddress)) {
         return characterRomData[mappedAddress];
@@ -122,7 +122,7 @@ nesByte Cartridge::ppuRead(nesWord address) {
     return 0x00;
 }
 
-void Cartridge::ppuWrite(nesWord address, nesByte data) {
+void Cartridge::ppuWrite(Uint16 address, Uint8 data) {
     unsigned int mappedAddress;
     if (mapper->mapPpuWrite(address, mappedAddress)) {
         characterRomData[mappedAddress] = data;

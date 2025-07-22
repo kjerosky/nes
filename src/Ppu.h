@@ -4,7 +4,6 @@
 #include <SDL3/SDL.h>
 
 #include "Cartridge.h"
-#include "Types.h"
 
 class Ppu {
 
@@ -19,25 +18,25 @@ public:
     bool checkAndResetNmiSignal();
     void reset();
 
-    nesByte cpuRead(nesWord address, bool onlyRead = false);
-    void cpuWrite(nesWord address, nesByte data);
+    Uint8 cpuRead(Uint16 address, bool onlyRead = false);
+    void cpuWrite(Uint16 address, Uint8 data);
 
-    nesByte* getNameTable(int nameTableIndex);
+    Uint8* getNameTable(int nameTableIndex);
 
-    void writeToOam(nesByte address, nesByte data);
-    nesByte* getOamBytes();
+    void writeToOam(Uint8 address, Uint8 data);
+    Uint8* getOamBytes();
 
 private:
 
     Cartridge* cartridge;
 
     Uint32 nesMainPalette[0x40];
-    nesByte activePalettesBytes[32];
+    Uint8 activePalettesBytes[32];
 
     Uint32* screen_pixels;
     SDL_Texture* screen_texture;
 
-    nesByte nameTables[2][1024];
+    Uint8 nameTables[2][1024];
 
     int scanline;
     int cycle;
@@ -46,16 +45,16 @@ private:
 
     class {
     public:
-        nesByte nameTableX : 1;
-        nesByte nameTableY : 1;
-        nesByte incrementMode : 1;
-        nesByte patternSprite : 1;
-        nesByte patternBackground : 1;
-        nesByte spriteSize : 1;
-        nesByte slaveMode : 1;
-        nesByte nmiEnabled : 1;
+        Uint8 nameTableX : 1;
+        Uint8 nameTableY : 1;
+        Uint8 incrementMode : 1;
+        Uint8 patternSprite : 1;
+        Uint8 patternBackground : 1;
+        Uint8 spriteSize : 1;
+        Uint8 slaveMode : 1;
+        Uint8 nmiEnabled : 1;
 
-        void setData(nesByte data) {
+        void setData(Uint8 data) {
             nameTableX = (data >> 0) & 0x01;
             nameTableY = (data >> 1) & 0x01;
             incrementMode = (data >> 2) & 0x01;
@@ -66,7 +65,7 @@ private:
             nmiEnabled = (data >> 7) & 0x01;
         }
 
-        nesByte getAsByte() {
+        Uint8 getAsByte() {
             return
                 (nameTableX << 0) |
                 (nameTableY << 1) |
@@ -82,16 +81,16 @@ private:
 
     class {
     public:
-        nesByte greyscale : 1;
-        nesByte renderBackgroundLeft : 1;
-        nesByte renderSpritesLeft : 1;
-        nesByte renderBackground : 1;
-        nesByte renderSprites : 1;
-        nesByte emphasizeRed : 1;
-        nesByte emphasizeGreen : 1;
-        nesByte emphasizeBlue : 1;
+        Uint8 greyscale : 1;
+        Uint8 renderBackgroundLeft : 1;
+        Uint8 renderSpritesLeft : 1;
+        Uint8 renderBackground : 1;
+        Uint8 renderSprites : 1;
+        Uint8 emphasizeRed : 1;
+        Uint8 emphasizeGreen : 1;
+        Uint8 emphasizeBlue : 1;
 
-        void setData(nesByte data) {
+        void setData(Uint8 data) {
             greyscale = (data >> 0) & 0x01;
             renderBackgroundLeft = (data >> 1) & 0x01;
             renderSpritesLeft = (data >> 2) & 0x01;
@@ -105,17 +104,17 @@ private:
 
     class {
     public:
-        nesByte verticalBlank : 1;
-        nesByte spriteZeroHit : 1;
-        nesByte spriteOverflow : 1;
+        Uint8 verticalBlank : 1;
+        Uint8 spriteZeroHit : 1;
+        Uint8 spriteOverflow : 1;
 
-        void setData(nesByte data) {
+        void setData(Uint8 data) {
             verticalBlank = (data >> 7) & 0x01;
             spriteZeroHit = (data >> 6) & 0x01;
             spriteOverflow = (data >> 5) & 0x01;
         }
 
-        nesByte getAsByte() {
+        Uint8 getAsByte() {
             return
                 (verticalBlank << 7) |
                 (spriteZeroHit << 6) |
@@ -125,23 +124,23 @@ private:
     } ppuStatusRegister;
 
     bool ppuAddressLatchUseLoByte;
-    nesByte ppuDataBuffer;
+    Uint8 ppuDataBuffer;
 
     void initializePalette(const SDL_PixelFormatDetails* pixel_format_details);
     Uint32 getPaletteColor(int paletteIndex, int paletteColorIndex);
 
-    nesByte readViaPpuBus(nesWord address, bool onlyRead = false);
-    void writeViaPpuBus(nesWord address, nesByte data);
+    Uint8 readViaPpuBus(Uint16 address, bool onlyRead = false);
+    void writeViaPpuBus(Uint16 address, Uint8 data);
 
     class {
     public:
-        nesByte coarseX : 5;
-        nesByte coarseY : 5;
-        nesByte nameTableX : 1;
-        nesByte nameTableY : 1;
-        nesByte fineY : 3;
+        Uint8 coarseX : 5;
+        Uint8 coarseY : 5;
+        Uint8 nameTableX : 1;
+        Uint8 nameTableY : 1;
+        Uint8 fineY : 3;
 
-        void setData(nesWord data) {
+        void setData(Uint16 data) {
             coarseX = (data >> 0) & 0x1F;
             coarseY = (data >> 5) & 0x1F;
             nameTableX = (data >> 10) & 0x01;
@@ -149,7 +148,7 @@ private:
             fineY = (data >> 12) & 0x07;
         }
 
-        nesWord getAsWord() {
+        Uint16 getAsWord() {
             return
                 (fineY << 12) |
                 (nameTableY << 11) |
@@ -159,22 +158,22 @@ private:
             ;
         }
 
-        void increment(nesWord amount) {
+        void increment(Uint16 amount) {
             setData((getAsWord() + amount) & 0x7FFF);
         }
     } vRamAddress, tRamAddress;
 
-    nesByte fineX;
+    Uint8 fineX;
 
-    nesByte nextBackgroundNameTableByte;
-    nesByte nextBackgroundAttributeByte;
-    nesByte nextBackgroundLsbpByte;
-    nesByte nextBackgroundMsbpByte;
+    Uint8 nextBackgroundNameTableByte;
+    Uint8 nextBackgroundAttributeByte;
+    Uint8 nextBackgroundLsbpByte;
+    Uint8 nextBackgroundMsbpByte;
 
-    nesWord backgroundPatternLsbShiftRegister;
-    nesWord backgroundPatternMsbShiftRegister;
-    nesWord backgroundAttributeLsbShiftRegister;
-    nesWord backgroundAttributeMsbShiftRegister;
+    Uint16 backgroundPatternLsbShiftRegister;
+    Uint16 backgroundPatternMsbShiftRegister;
+    Uint16 backgroundAttributeLsbShiftRegister;
+    Uint16 backgroundAttributeMsbShiftRegister;
 
     void incrementHorizontalScroll();
     void incrementVerticalScroll();
@@ -184,18 +183,18 @@ private:
     void updateShiftRegisters();
 
     struct spriteEntry {
-        nesByte y;
-        nesByte patternId;
-        nesByte attributes;
-        nesByte x;
+        Uint8 y;
+        Uint8 patternId;
+        Uint8 attributes;
+        Uint8 x;
     };
     spriteEntry oam[64];
     spriteEntry secondaryOam[8];
-    nesByte* oamBytes = (nesByte*)oam;
-    nesByte* secondaryOamBytes = (nesByte*)secondaryOam;
-    nesByte oamAddress;
-    nesByte spriteLsbShiftRegisters[8];
-    nesByte spriteMsbShiftRegisters[8];
+    Uint8* oamBytes = (Uint8*)oam;
+    Uint8* secondaryOamBytes = (Uint8*)secondaryOam;
+    Uint8 oamAddress;
+    Uint8 spriteLsbShiftRegisters[8];
+    Uint8 spriteMsbShiftRegisters[8];
     bool spriteZeroHitIsPossible;
     bool spriteZeroIsBeingRendered;
 

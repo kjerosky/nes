@@ -101,18 +101,18 @@ public:
     }
 
     void updateControllerStates() {
-        nesByte controller1State = 0x00;
+        Uint8 controller1State = 0x00;
         controller1State |= (keyboard_state[SDL_SCANCODE_K] ? 0x01 : 0x00);
         controller1State |= (keyboard_state[SDL_SCANCODE_J] ? 0x02 : 0x00);
-        controller1State |= (keyboard_state[SDL_SCANCODE_L] ? 0x04 : 0x00);
-        controller1State |= (keyboard_state[SDL_SCANCODE_O] ? 0x08 : 0x00);
+        controller1State |= (keyboard_state[SDL_SCANCODE_U] ? 0x04 : 0x00);
+        controller1State |= (keyboard_state[SDL_SCANCODE_I] ? 0x08 : 0x00);
         controller1State |= (keyboard_state[SDL_SCANCODE_W] ? 0x10 : 0x00);
         controller1State |= (keyboard_state[SDL_SCANCODE_S] ? 0x20 : 0x00);
         controller1State |= (keyboard_state[SDL_SCANCODE_A] ? 0x40 : 0x00);
         controller1State |= (keyboard_state[SDL_SCANCODE_D] ? 0x80 : 0x00);
 
         // controller 2 is unimplemented for now
-        nesByte controller2State = 0x00;
+        Uint8 controller2State = 0x00;
 
         nes->updateControllerStates(controller1State, controller2State);
     }

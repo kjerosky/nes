@@ -3,12 +3,12 @@
 
 #include <SDL3/SDL.h>
 
-class Triangle {
+class TriangleChannel {
 
 public:
 
-    Triangle();
-    ~Triangle();
+    TriangleChannel();
+    ~TriangleChannel();
 
     void set_control(bool value);
     void set_linear_counter_reload(Uint8 value);

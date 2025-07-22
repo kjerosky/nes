@@ -1,7 +1,8 @@
 #ifndef BUS_H
 #define BUS_H
 
-#include "Types.h"
+#include <SDL3/SDL.h>
+
 #include "Ppu.h"
 #include "Apu.h"
 #include "Cartridge.h"
@@ -11,15 +12,15 @@ class Bus {
 public:
 
     static const int RAM_SIZE = 2048;
-    nesByte ram[RAM_SIZE];
+    Uint8 ram[RAM_SIZE];
 
     Bus(Ppu* ppu, Apu* apu, Cartridge* cartridge);
     ~Bus();
 
-    nesByte cpuRead(nesWord address, bool onlyRead = false);
-    void cpuWrite(nesWord address, nesByte value);
+    Uint8 cpuRead(Uint16 address, bool onlyRead = false);
+    void cpuWrite(Uint16 address, Uint8 value);
 
-    void updateControllerStates(nesByte controller1State, nesByte controller2State);
+    void updateControllerStates(Uint8 controller1State, Uint8 controller2State);
 
     bool checkDmaProgress();
 
@@ -29,12 +30,12 @@ private:
     Apu* apu;
     Cartridge* cartridge;
 
-    nesByte controllerStates[2];
-    nesByte latchedControllerStates[2];
+    Uint8 controllerStates[2];
+    Uint8 latchedControllerStates[2];
 
-    nesByte dmaPage;
-    nesByte dmaAddress;
-    nesByte dmaData;
+    Uint8 dmaPage;
+    Uint8 dmaAddress;
+    Uint8 dmaData;
     bool dmaInProgress;
     bool dmaReadyToWriteData;
 };

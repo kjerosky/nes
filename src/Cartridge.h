@@ -3,8 +3,8 @@
 
 #include <string>
 #include <vector>
+#include <SDL3/SDL.h>
 
-#include "Types.h"
 #include "Mapper.h"
 
 class Cartridge {
@@ -18,10 +18,10 @@ public:
 
     void reset();
 
-    nesByte cpuRead(nesWord address);
-    void cpuWrite(nesWord address, nesByte data);
-    nesByte ppuRead(nesWord address);
-    void ppuWrite(nesWord address, nesByte data);
+    Uint8 cpuRead(Uint16 address);
+    void cpuWrite(Uint16 address, Uint8 data);
+    Uint8 ppuRead(Uint16 address);
+    void ppuWrite(Uint16 address, Uint8 data);
 
     enum Mirroring {
         HORIZONTAL,
@@ -34,8 +34,8 @@ private:
 
     bool valid = false;
 
-    std::vector<nesByte> programRomData;
-    std::vector<nesByte> characterRomData;
+    std::vector<Uint8> programRomData;
+    std::vector<Uint8> characterRomData;
     Mapper* mapper;
 };
 

@@ -12,10 +12,10 @@ public:
 
     void reset() override;
 
-    bool mapCpuRead(nesWord requestedAddress, unsigned int& mappedAddress) override;
-    bool mapCpuWrite(nesWord requestedAddress, unsigned int& mappedAddress, nesByte data) override;
-    bool mapPpuRead(nesWord requestedAddress, unsigned int& mappedAddress) override;
-    bool mapPpuWrite(nesWord requestedAddress, unsigned int& mappedAddress) override;
+    bool mapCpuRead(Uint16 requestedAddress, unsigned int& mappedAddress) override;
+    bool mapCpuWrite(Uint16 requestedAddress, unsigned int& mappedAddress, Uint8 data) override;
+    bool mapPpuRead(Uint16 requestedAddress, unsigned int& mappedAddress) override;
+    bool mapPpuWrite(Uint16 requestedAddress, unsigned int& mappedAddress) override;
 
 private:
 

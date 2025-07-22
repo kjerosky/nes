@@ -15,14 +15,14 @@ Bus::~Bus() {
     // do nothing
 }
 
-nesByte Bus::cpuRead(nesWord address, bool onlyRead) {
+Uint8 Bus::cpuRead(Uint16 address, bool onlyRead) {
     if (address >= 0x0000 && address <= 0x1FFF) {
         return ram[address & 0x07FF];
     } else if (address >= 0x2000 && address <= 0x3FFF) {
         return ppu->cpuRead(address & 0x0007, onlyRead);
     } else if (address >= 0x4016 && address <= 0x4017) {
         int controllerId = address & 0x0001;
-        nesByte currentControllerBit = latchedControllerStates[controllerId] & 0x01;
+        Uint8 currentControllerBit = latchedControllerStates[controllerId] & 0x01;
         latchedControllerStates[controllerId] >>= 1;
         return currentControllerBit;
     } else if (address >= 0x8000 && address <= 0xFFFF) {
@@ -32,7 +32,7 @@ nesByte Bus::cpuRead(nesWord address, bool onlyRead) {
     return 0x00;
 }
 
-void Bus::cpuWrite(nesWord address, nesByte value) {
+void Bus::cpuWrite(Uint16 address, Uint8 value) {
     if (address >= 0x0000 && address <= 0x1FFF) {
         ram[address] = value;
     } else if (address >= 0x2000 && address <= 0x3FFF) {
@@ -53,7 +53,7 @@ void Bus::cpuWrite(nesWord address, nesByte value) {
     }
 }
 
-void Bus::updateControllerStates(nesByte controller1State, nesByte controller2State) {
+void Bus::updateControllerStates(Uint8 controller1State, Uint8 controller2State) {
     controllerStates[0] = controller1State;
     controllerStates[1] = controller2State;
 }

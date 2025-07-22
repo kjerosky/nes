@@ -1,7 +1,7 @@
 #ifndef MAPPER_H
 #define MAPPER_H
 
-#include "Types.h"
+#include <SDL3/SDL.h>
 
 class Mapper {
 
@@ -12,10 +12,10 @@ public:
 
     virtual void reset();
 
-    virtual bool mapCpuRead(nesWord requestedAddress, unsigned int& mappedAddress) = 0;
-    virtual bool mapCpuWrite(nesWord requestedAddress, unsigned int& mappedAddress, nesByte data) = 0;
-    virtual bool mapPpuRead(nesWord requestedAddress, unsigned int& mappedAddress) = 0;
-    virtual bool mapPpuWrite(nesWord requestedAddress, unsigned int& mappedAddress) = 0;
+    virtual bool mapCpuRead(Uint16 requestedAddress, unsigned int& mappedAddress) = 0;
+    virtual bool mapCpuWrite(Uint16 requestedAddress, unsigned int& mappedAddress, Uint8 data) = 0;
+    virtual bool mapPpuRead(Uint16 requestedAddress, unsigned int& mappedAddress) = 0;
+    virtual bool mapPpuWrite(Uint16 requestedAddress, unsigned int& mappedAddress) = 0;
 
 protected:
 
