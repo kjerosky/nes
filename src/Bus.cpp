@@ -25,6 +25,8 @@ Uint8 Bus::cpuRead(Uint16 address, bool onlyRead) {
         Uint8 currentControllerBit = latchedControllerStates[controllerId] & 0x01;
         latchedControllerStates[controllerId] >>= 1;
         return currentControllerBit;
+    } else if (address >= 0x6000 && address <= 0x7FFF) {
+        return save_ram.read(address);
     } else if (address >= 0x8000 && address <= 0xFFFF) {
         return cartridge->cpuRead(address);
     }
@@ -48,6 +50,8 @@ void Bus::cpuWrite(Uint16 address, Uint8 value) {
         // NOTE: There are more accurate ways to do this, but it works for now! :)
         int controllerId = address & 0x0001;
         latchedControllerStates[controllerId] = controllerStates[controllerId];
+    } else if (address >= 0x6000 && address <= 0x7FFF) {
+        save_ram.write(address, value);
     } else if (address >= 0x8000 && address <= 0xFFFF) {
         cartridge->cpuWrite(address, value);
     }

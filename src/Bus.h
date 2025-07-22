@@ -6,6 +6,7 @@
 #include "Ppu.h"
 #include "Apu.h"
 #include "Cartridge.h"
+#include "SaveRam.h"
 
 class Bus {
 
@@ -29,6 +30,7 @@ private:
     Ppu* ppu;
     Apu* apu;
     Cartridge* cartridge;
+    SaveRam save_ram;
 
     Uint8 controllerStates[2];
     Uint8 latchedControllerStates[2];
