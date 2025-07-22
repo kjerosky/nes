@@ -6,6 +6,7 @@
 #include <SDL3/SDL.h>
 
 #include "Mapper.h"
+#include "Mirroring.h"
 
 class Cartridge {
 
@@ -23,10 +24,7 @@ public:
     Uint8 ppuRead(Uint16 address);
     void ppuWrite(Uint16 address, Uint8 data);
 
-    enum Mirroring {
-        HORIZONTAL,
-        VERTICAL
-    } mirroring;
+    Mirroring mirroring;
 
     Mirroring getMirroring();
 

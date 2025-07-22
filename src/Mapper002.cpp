@@ -44,3 +44,7 @@ bool Mapper002::mapPpuWrite(Uint16 requestedAddress, unsigned int& mappedAddress
 
     return false;
 }
+
+bool Mapper002::handles_mirror(Mirroring& mirroring) {
+    return false;
+}

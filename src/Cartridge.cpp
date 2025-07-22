@@ -3,6 +3,7 @@
 #include <fstream>
 
 #include "Mapper000.h"
+#include "Mapper001.h"
 #include "Mapper002.h"
 #include "Mapper003.h"
 
@@ -60,6 +61,10 @@ Cartridge::Cartridge(std::string filename) {
                 mapper = new Mapper000(programRomBankCount, characterRomBankCount);
                 break;
 
+            case 1:
+                mapper = new Mapper001(programRomBankCount, characterRomBankCount);
+                break;
+
             case 2:
                 mapper = new Mapper002(programRomBankCount, characterRomBankCount);
                 break;
@@ -87,7 +92,12 @@ bool Cartridge::isValid() {
     return valid;
 }
 
-enum Cartridge::Mirroring Cartridge::getMirroring() {
+Mirroring Cartridge::getMirroring() {
+    Mirroring override;
+    if (mapper->handles_mirror(override)) {
+        return override;
+    }
+
     return mirroring;
 }
 

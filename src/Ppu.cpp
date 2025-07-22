@@ -280,18 +280,31 @@ Uint8 Ppu::readViaPpuBus(Uint16 address, bool onlyRead) {
         data = cartridge->ppuRead(address);
     } else if (address >= 0x2000 && address <= 0x3EFF) {
         address &= 0x0FFF;
-        if (cartridge->getMirroring() == Cartridge::Mirroring::VERTICAL) {
-            if ((address >= 0x0000 && address <= 0x03FF) || (address >= 0x0800 && address <= 0x0BFF)) {
+
+        switch (cartridge->getMirroring()) {
+            case Mirroring::VERTICAL:
+                if ((address >= 0x0000 && address <= 0x03FF) || (address >= 0x0800 && address <= 0x0BFF)) {
+                    data = nameTables[0][address & 0x03FF];
+                } else if ((address >= 0x0400 && address <= 0x07FF) || (address >= 0x0C00 && address <= 0x0FFF)) {
+                    data = nameTables[1][address & 0x03FF];
+                }
+                break;
+
+            case Mirroring::HORIZONTAL:
+                if ((address >= 0x0000 && address <= 0x03FF) || (address >= 0x0400 && address <= 0x07FF)) {
+                    data = nameTables[0][address & 0x03FF];
+                } else if ((address >= 0x0800 && address <= 0x0BFF) || (address >= 0x0C00 && address <= 0x0FFF)) {
+                    data = nameTables[1][address & 0x03FF];
+                }
+                break;
+
+            case Mirroring::ONE_SCREEN_LOWER_BANK:
                 data = nameTables[0][address & 0x03FF];
-            } else if ((address >= 0x0400 && address <= 0x07FF) || (address >= 0x0C00 && address <= 0x0FFF)) {
+                break;
+
+            case Mirroring::ONE_SCREEN_UPPER_BANK:
                 data = nameTables[1][address & 0x03FF];
-            }
-        } else if (cartridge->getMirroring() == Cartridge::Mirroring::HORIZONTAL) {
-            if ((address >= 0x0000 && address <= 0x03FF) || (address >= 0x0400 && address <= 0x07FF)) {
-                data = nameTables[0][address & 0x03FF];
-            } else if ((address >= 0x0800 && address <= 0x0BFF) || (address >= 0x0C00 && address <= 0x0FFF)) {
-                data = nameTables[1][address & 0x03FF];
-            }
+                break;
         }
     } else if (address >= 0x3F00 && 0x3FFF) {
         address &= 0x001F;
@@ -317,13 +330,13 @@ void Ppu::writeViaPpuBus(Uint16 address, Uint8 data) {
         cartridge->ppuWrite(address, data);
     } else if (address >= 0x2000 && address <= 0x3EFF) {
         address &= 0x0FFF;
-        if (cartridge->getMirroring() == Cartridge::Mirroring::VERTICAL) {
+        if (cartridge->getMirroring() == Mirroring::VERTICAL) {
             if ((address >= 0x0000 && address <= 0x03FF) || (address >= 0x0800 && address <= 0x0BFF)) {
                 nameTables[0][address & 0x03FF] = data;
             } else if ((address >= 0x0400 && address <= 0x07FF) || (address >= 0x0C00 && address <= 0x0FFF)) {
                 nameTables[1][address & 0x03FF] = data;
             }
-        } else if (cartridge->getMirroring() == Cartridge::Mirroring::HORIZONTAL) {
+        } else if (cartridge->getMirroring() == Mirroring::HORIZONTAL) {
             if ((address >= 0x0000 && address <= 0x03FF) || (address >= 0x0400 && address <= 0x07FF)) {
                 nameTables[0][address & 0x03FF] = data;
             } else if ((address >= 0x0800 && address <= 0x0BFF) || (address >= 0x0C00 && address <= 0x0FFF)) {

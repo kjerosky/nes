@@ -16,6 +16,7 @@ public:
     bool mapCpuWrite(Uint16 requestedAddress, unsigned int& mappedAddress, Uint8 data) override;
     bool mapPpuRead(Uint16 requestedAddress, unsigned int& mappedAddress) override;
     bool mapPpuWrite(Uint16 requestedAddress, unsigned int& mappedAddress) override;
+    bool handles_mirror(Mirroring& mirroring) override;
 };
 
 #endif

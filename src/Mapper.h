@@ -3,6 +3,8 @@
 
 #include <SDL3/SDL.h>
 
+#include "Mirroring.h"
+
 class Mapper {
 
 public:
@@ -16,6 +18,7 @@ public:
     virtual bool mapCpuWrite(Uint16 requestedAddress, unsigned int& mappedAddress, Uint8 data) = 0;
     virtual bool mapPpuRead(Uint16 requestedAddress, unsigned int& mappedAddress) = 0;
     virtual bool mapPpuWrite(Uint16 requestedAddress, unsigned int& mappedAddress) = 0;
+    virtual bool handles_mirror(Mirroring& mirroring) = 0;
 
 protected:
 
