@@ -133,7 +133,7 @@ Uint8 Apu::cpuRead(Uint16 address, bool onlyRead) {
     Uint8 value = 0x00;
 
     if (address == 0x4015) {
-        //TODO IMPLEMENT THIS
+        //todo
     }
 
     return value;

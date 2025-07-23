@@ -20,6 +20,8 @@ Uint8 Bus::cpuRead(Uint16 address, bool onlyRead) {
         return ram[address & 0x07FF];
     } else if (address >= 0x2000 && address <= 0x3FFF) {
         return ppu->cpuRead(address & 0x0007, onlyRead);
+    } else if (address == 0x4015) {
+        return apu->cpuRead(address, onlyRead);
     } else if (address >= 0x4016 && address <= 0x4017) {
         int controllerId = address & 0x0001;
         Uint8 currentControllerBit = latchedControllerStates[controllerId] & 0x01;
