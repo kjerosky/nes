@@ -107,5 +107,10 @@ int TriangleChannel::get_output() {
         output = WAVEFORM_VALUES[waveform_index];
     }
 
+    // If an ultrasonic frequency is set, just silence the channel.
+    if (timer_reload < 2) {
+        return 0;
+    }
+
     return output;
 }
