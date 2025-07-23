@@ -8,14 +8,13 @@ const Uint16 NoiseChannel::TIMER_RELOAD_VALUES[16] = {
 
 NoiseChannel::NoiseChannel()
 :
-is_length_counter_halted(true),
 mode(0),
 timer_reload(0),
 length_counter(0),
 timer(0),
 lfsr(0x0001) {
 
-    // nothing to do for now
+    set_length_counter_halted(true);
 }
 
 // --------------------------------------------------------------------------
@@ -26,8 +25,19 @@ NoiseChannel::~NoiseChannel() {
 
 // --------------------------------------------------------------------------
 
+void NoiseChannel::reset() {
+    length_counter = 0;
+    set_length_counter_halted(true);
+    lfsr = 0x0001;
+}
+
+// --------------------------------------------------------------------------
+
 void NoiseChannel::set_length_counter_halted(bool value) {
     is_length_counter_halted = value;
+
+    // The envelope loop and length counter halted flags share the same value.
+    envelope.set_looping(is_length_counter_halted);
 }
 
 // --------------------------------------------------------------------------

@@ -16,7 +16,6 @@ public:
     void reset();
     void clock_quarter_frame();
     void clock_half_frame();
-    void set_enabled(bool is_enabled);
     void set_timer_upper_byte(Uint8 upper_byte);
     void set_timer_lower_byte(Uint8 lower_byte);
     void set_duty_cycle(Uint8 duty_cycle);
@@ -32,7 +31,6 @@ private:
 
     static const Uint8 DUTY_TABLE[4][8];
 
-    bool is_enabled;
     Uint16 timer;
     Uint8 length_counter;
     bool is_length_counter_halted;

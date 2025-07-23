@@ -54,6 +54,8 @@ void Apu::reset() {
 
     pulse_channel_1.reset();
     pulse_channel_2.reset();
+    triangle_channel.reset();
+    noise_channel.reset();
 
     frameCounterCycle = 0;
     frameCounterMode = 0;
@@ -118,7 +120,7 @@ float Apu::getAudioSampleOutput() {
 
     int tri = triangle_channel.get_output();
     int noise = noise_channel.get_output();
-    int dmc = 0; //todo
+    int dmc = 0; //todo dmc
     double tnd_out = 0.0;
     if (tri != 0 || noise != 0 || dmc != 0) {
         tnd_out = 159.79 / (1.0 / (tri / 8227.0 + noise / 12241.0 + dmc / 22638.0) + 100);
@@ -226,7 +228,7 @@ void Apu::cpuWrite(Uint16 address, Uint8 data) {
         // Length counter halt / linear counter control (C), linear counter load (R)
         // CRRR RRRR
         case 0x4008:
-            triangle_channel.set_control((data & 0x80) != 0);
+            triangle_channel.set_length_counter_halted((data & 0x80) != 0);
             triangle_channel.set_linear_counter_reload(data & 0x7F);
             break;
 
@@ -286,28 +288,28 @@ void Apu::cpuWrite(Uint16 address, Uint8 data) {
         // IRQ enable (I), loop (L), frequency (R)
         // IL-- RRRR
         case 0x4010:
-            //TODO
+            //todo dmc
             break;
 
         // dmc
         // Load counter (D)
         // -DDD DDDD
         case 0x4011:
-            //TODO
+            //todo dmc
             break;
 
         // dmc
         // Sample address (A)
         // AAAA AAAA
         case 0x4012:
-            //TODO
+            //todo dmc
             break;
 
         // dmc
         // Sample length (L)
         // LLLL LLLL
         case 0x4013:
-            //TODO
+            //todo dmc
             break;
 
         // =============== STATUS ===============
@@ -316,14 +318,27 @@ void Apu::cpuWrite(Uint16 address, Uint8 data) {
         // Enable DMC (D), noise (N), triangle (T), and pulse channels (2/1)
         // ---D NT21
         case 0x4015:
-            pulse_channel_1.set_enabled((data & 0x01) != 0);
-            pulse_channel_2.set_enabled((data & 0x02) != 0);
+            if ((data & 0x01) == 0) {
+                pulse_channel_1.set_length_counter(0);
+                pulse_channel_1.set_length_counter_halted(true);
+            }
+
+            if ((data & 0x02) == 0) {
+                pulse_channel_2.set_length_counter(0);
+                pulse_channel_2.set_length_counter_halted(true);
+            }
 
             if ((data & 0x04) == 0) {
                 triangle_channel.set_length_counter(0);
+                triangle_channel.set_length_counter_halted(true);
             }
 
-            //todo add others here!!!
+            if ((data & 0x08) == 0) {
+                noise_channel.set_length_counter(0);
+                noise_channel.set_length_counter_halted(true);
+            }
+
+            //todo dmc
             break;
 
         // =============== FRAME COUNTER ===============
@@ -333,7 +348,7 @@ void Apu::cpuWrite(Uint16 address, Uint8 data) {
         // MI-- ----
         case 0x4017:
             frameCounterMode = (data & 0x80) ? 1 : 0;
-            //TODO IRQ INHIBIT FLAG
+            //todo dmc irq inhibit flag
             break;
     }
 }

@@ -25,7 +25,6 @@ PulseChannel::~PulseChannel() {
 // --------------------------------------------------------------------------
 
 void PulseChannel::reset() {
-    is_enabled = false;
     timer = 0;
     length_counter = 0;
     duty_cycle = 0.0f;
@@ -44,19 +43,11 @@ void PulseChannel::clock_quarter_frame() {
 // --------------------------------------------------------------------------
 
 void PulseChannel::clock_half_frame() {
-    if (!is_enabled) {
-        length_counter = 0;
-    } else if (length_counter > 0 && !is_length_counter_halted) {
+    if (length_counter > 0 && !is_length_counter_halted) {
         length_counter--;
     }
 
     sweep.clock(timer);
-}
-
-// --------------------------------------------------------------------------
-
-void PulseChannel::set_enabled(bool is_enabled) {
-    this->is_enabled = is_enabled;
 }
 
 // --------------------------------------------------------------------------

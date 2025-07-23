@@ -20,6 +20,7 @@ public:
     void clock_timer();
     void clock_quarter_frame();
     void clock_half_frame();
+    void reset();
     int get_output();
 
 private:

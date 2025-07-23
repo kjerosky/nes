@@ -9,7 +9,7 @@ const int TriangleChannel::WAVEFORM_VALUES[32] = {
 
 TriangleChannel::TriangleChannel()
 :
-control(false),
+is_length_counter_halted(true),
 linear_counter_reload(0),
 timer_reload(0),
 length_counter(0),
@@ -29,8 +29,15 @@ TriangleChannel::~TriangleChannel() {
 
 // --------------------------------------------------------------------------
 
-void TriangleChannel::set_control(bool value) {
-    control = value;
+void TriangleChannel::reset() {
+    length_counter = 0;
+    is_length_counter_halted = true;
+}
+
+// --------------------------------------------------------------------------
+
+void TriangleChannel::set_length_counter_halted(bool value) {
+    is_length_counter_halted = value;
 }
 
 // --------------------------------------------------------------------------
@@ -78,7 +85,7 @@ void TriangleChannel::clock_quarter_frame() {
         linear_counter--;
     }
 
-    if (!control) {
+    if (!is_length_counter_halted) {
         should_reload_linear_counter = false;
     }
 }
@@ -86,7 +93,7 @@ void TriangleChannel::clock_quarter_frame() {
 // --------------------------------------------------------------------------
 
 void TriangleChannel::clock_half_frame() {
-    if (!control && length_counter > 0) {
+    if (length_counter > 0 && !is_length_counter_halted) {
         length_counter--;
     }
 }

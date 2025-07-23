@@ -10,7 +10,7 @@ public:
     TriangleChannel();
     ~TriangleChannel();
 
-    void set_control(bool value);
+    void set_length_counter_halted(bool value);
     void set_linear_counter_reload(Uint8 value);
     void set_timer_reload_low_byte(Uint8 value);
     void set_timer_reload_high_byte(Uint8 value);
@@ -18,13 +18,14 @@ public:
     void clock_timer();
     void clock_quarter_frame();
     void clock_half_frame();
+    void reset();
     int get_output();
 
 private:
 
     static const int WAVEFORM_VALUES[32];
 
-    bool control;
+    bool is_length_counter_halted;
     Uint8 linear_counter_reload;
     Uint16 timer_reload;
     Uint8 length_counter;
