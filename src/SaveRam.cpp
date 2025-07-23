@@ -30,8 +30,6 @@ void SaveRam::reset() {
         if (!load_from_disk()) {
             clear();
         }
-    } else {
-        save_to_disk();
     }
 
     have_contents_changed = false;
