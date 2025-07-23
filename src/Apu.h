@@ -34,6 +34,17 @@ private:
 
     int frameCounterCycle;
     Uint8 frameCounterMode;
+
+    bool debug_pulse1_enabled;
+    bool debug_pulse2_enabled;
+    bool debug_triangle_enabled;
+    bool debug_noise_enabled;
+    bool previous_toggle_debug_pulse1_key_state;
+    bool previous_toggle_debug_pulse2_key_state;
+    bool previous_toggle_debug_triangle_key_state;
+    bool previous_toggle_debug_noise_key_state;
+
+    void process_debug_keys();
 };
 
 #endif

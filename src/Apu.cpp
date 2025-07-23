@@ -43,6 +43,15 @@ pulse_channel_2(true) {
     lengthsTable[0x1F] = 30;
 
     reset();
+
+    debug_pulse1_enabled = true;
+    debug_pulse2_enabled = true;
+    debug_triangle_enabled = true;
+    debug_noise_enabled = true;
+    previous_toggle_debug_pulse1_key_state = false;
+    previous_toggle_debug_pulse2_key_state = false;
+    previous_toggle_debug_triangle_key_state = false;
+    previous_toggle_debug_noise_key_state = false;
 }
 
 Apu::~Apu() {
@@ -109,17 +118,19 @@ void Apu::clockTick() {
 }
 
 float Apu::getAudioSampleOutput() {
+    process_debug_keys();
+
     // Here, we'll perform audio mixing according to blargg's formulas.
 
-    int pulse1 = pulse_channel_1.get_output();
-    int pulse2 = pulse_channel_2.get_output();
+    int pulse1 = debug_pulse1_enabled ? pulse_channel_1.get_output() : 0;
+    int pulse2 = debug_pulse2_enabled ? pulse_channel_2.get_output() : 0;
     double pulse_out = 0.0;
     if (pulse1 != 0 || pulse2 != 0) {
         pulse_out = 95.88 / ((8128.0 / (pulse1 + pulse2)) + 100);
     }
 
-    int tri = triangle_channel.get_output();
-    int noise = noise_channel.get_output();
+    int tri = debug_triangle_enabled ? triangle_channel.get_output() : 0;
+    int noise = debug_noise_enabled ? noise_channel.get_output() : 0;
     int dmc = 0; //todo dmc
     double tnd_out = 0.0;
     if (tri != 0 || noise != 0 || dmc != 0) {
@@ -351,4 +362,33 @@ void Apu::cpuWrite(Uint16 address, Uint8 data) {
             //todo dmc irq inhibit flag
             break;
     }
+}
+
+void Apu::process_debug_keys() {
+    const bool* keyboard_state = SDL_GetKeyboardState(nullptr);
+    bool current_toggle_debug_pulse1_key_state = keyboard_state[SDL_SCANCODE_1];
+    bool current_toggle_debug_pulse2_key_state = keyboard_state[SDL_SCANCODE_2];
+    bool current_toggle_debug_triangle_key_state = keyboard_state[SDL_SCANCODE_3];
+    bool current_toggle_debug_noise_key_state = keyboard_state[SDL_SCANCODE_4];
+
+    if (!previous_toggle_debug_pulse1_key_state && current_toggle_debug_pulse1_key_state) {
+        debug_pulse1_enabled = !debug_pulse1_enabled;
+    }
+
+    if (!previous_toggle_debug_pulse2_key_state && current_toggle_debug_pulse2_key_state) {
+        debug_pulse2_enabled = !debug_pulse2_enabled;
+    }
+
+    if (!previous_toggle_debug_triangle_key_state && current_toggle_debug_triangle_key_state) {
+        debug_triangle_enabled = !debug_triangle_enabled;
+    }
+
+    if (!previous_toggle_debug_noise_key_state && current_toggle_debug_noise_key_state) {
+        debug_noise_enabled = !debug_noise_enabled;
+    }
+
+    previous_toggle_debug_pulse1_key_state = current_toggle_debug_pulse1_key_state;
+    previous_toggle_debug_pulse2_key_state = current_toggle_debug_pulse2_key_state;
+    previous_toggle_debug_triangle_key_state = current_toggle_debug_triangle_key_state;
+    previous_toggle_debug_noise_key_state = current_toggle_debug_noise_key_state;
 }
